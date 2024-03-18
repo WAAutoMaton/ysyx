@@ -97,10 +97,17 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
+        tokens[nr_token].type = rules[i].token_type;
+        if (substr_len>31) {
+          puts("Token too long!");
+          return false;
+        }
+        strncpy(tokens[nr_token].str, substr_start, substr_len);
 
         switch (rules[i].token_type) {
           default: TODO();
         }
+        nr_token++;
 
         break;
       }
