@@ -163,7 +163,7 @@ static sword_t eval(int p, int q)
         if (tokens[i].type==TK_ADD || tokens[i].type==TK_SUB) {
           op=i;
         } else if (tokens[i].type==TK_MUL || tokens[i].type==TK_DIV) {
-          if (op==-1 || tokens[i].type==TK_MUL || tokens[i].type==TK_DIV) op=i;
+          if (op==-1 || tokens[op].type==TK_MUL || tokens[op].type==TK_DIV) op=i;
         }
       }
     }
