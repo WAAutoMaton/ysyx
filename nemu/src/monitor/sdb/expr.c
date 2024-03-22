@@ -207,7 +207,11 @@ sword_t expr(char *e, bool *success) {
   eval_error = 0;
   sword_t result = eval(0,nr_token-1);
   if (eval_error<0) {
-    printf("Expression error: %d\n", eval_error);
+    if (eval_error==-5) {
+      puts("Divided by zero!");
+    } else {
+      printf("Expression error: %d\n", eval_error);
+    }
     *success = false;
     return 0;
   }
