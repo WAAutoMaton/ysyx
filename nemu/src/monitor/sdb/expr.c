@@ -23,7 +23,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ, TK_ADD, TK_SUB, TK_MUL, TK_DIV,
-  TK_LEFT_PAREN, TK_RIGHT_PAREN, TK_INTEGER,
+  TK_LEFT_PAREN, TK_RIGHT_PAREN, TK_INTEGER, TK_REGISTER, TK_NEQ, TK_AND
 
 };
 
@@ -43,8 +43,11 @@ static struct rule {
   {"\\/",TK_DIV},
   {"\\(",TK_LEFT_PAREN},
   {"\\)",TK_RIGHT_PAREN},
-      {"[0-9]+",TK_INTEGER}, // integer
+  {"[0-9]+",TK_INTEGER}, // integer
+  {"\\$[a-z]+",TK_REGISTER}, // register
   {"==", TK_EQ},        // equal
+  {"!=", TK_NEQ},        // not equal
+  {"&&", TK_AND},        // and
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -73,7 +76,8 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+#define MAX_TOKENS 512
+static Token tokens[MAX_TOKENS] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -146,7 +150,7 @@ static bool check_parentheses(int p,int q)
   return cnt==0;
 }
 
-static sword_t eval(int p, int q)
+static word_t eval(int p, int q)
 {
   if (p>q) {
     eval_error = -2;
@@ -179,9 +183,9 @@ static sword_t eval(int p, int q)
       eval_error = -4;
       return 0;
     }
-    sword_t val1=eval(p,op-1);
+    word_t val1=eval(p,op-1);
     if (eval_error<0) return 0;
-    sword_t val2=eval(op+1,q);
+    word_t val2=eval(op+1,q);
     if (eval_error<0) return 0;
     switch(tokens[op].type) {
       case TK_ADD: return val1+val2;
@@ -198,14 +202,14 @@ static sword_t eval(int p, int q)
   }
 }
 
-sword_t expr(char *e, bool *success) {
+word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
 
   eval_error = 0;
-  sword_t result = eval(0,nr_token-1);
+  word_t result = eval(0,nr_token-1);
   if (eval_error<0) {
     if (eval_error==-5) {
       puts("Divided by zero!");

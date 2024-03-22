@@ -131,9 +131,9 @@ static int cmd_p(char *args)
     return 0;
   }
   bool success=true;
-  sword_t result=expr(args, &success);
+  word_t result=expr(args, &success);
   if (success) {
-    printf("%lld\n", (long long)result);
+    printf("%llu\n", (unsigned long long)result);
   } else {
     puts("Invalid expression");
   }
