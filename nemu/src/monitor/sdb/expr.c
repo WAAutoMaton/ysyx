@@ -13,6 +13,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "common.h"
 #include <isa.h>
 
 /* We use the POSIX regex functions to process regular expressions.
@@ -122,15 +123,83 @@ static bool make_token(char *e) {
   return true;
 }
 
+static int eval_error;
+static bool check_parentheses(int p,int q)
+{
+  if (p-q<=2) return false;
+  if (!(tokens[p].type==TK_LEFT_PAREN && tokens[q].type==TK_RIGHT_PAREN)) return false;
+  int cnt=0;
+  for(int i=p+1;i<q;i++) {
+    if (tokens[i].type==TK_LEFT_PAREN) cnt++;
+    if (tokens[i].type==TK_RIGHT_PAREN) cnt--;
+    if (cnt<0) {
+      eval_error = -3;
+      return false;
+    }
+  }
+  return cnt==0;
+}
 
-word_t expr(char *e, bool *success) {
+static sword_t eval(int p, int q)
+{
+  if (p>q) {
+    eval_error = -2;
+    return 0;
+  } else if (p==q) {
+    if(tokens[p].type==TK_INTEGER) {
+      return atoi(tokens[p].str);
+    } else {
+      eval_error = -1;
+      return 0;
+    }
+  } else if (check_parentheses(p,q)) {
+    return eval(p+1,q-1);
+  } else {
+    if (eval_error<0) return 0; 
+    int op=-1;
+    int paren_cnt=0;
+    for(int i=p; i<=q; i++) {
+      if (tokens[i].type==TK_LEFT_PAREN) paren_cnt++;
+      else if (tokens[i].type==TK_RIGHT_PAREN) paren_cnt--;
+      else if (paren_cnt==0) {
+        if (tokens[i].type==TK_ADD || tokens[i].type==TK_SUB) {
+          op=i;
+        } else if (tokens[i].type==TK_MUL || tokens[i].type==TK_DIV) {
+          if (op==-1 || tokens[i].type==TK_MUL || tokens[i].type==TK_DIV) op=i;
+        }
+      }
+    }
+    if (op==-1) {
+      eval_error = -4;
+      return 0;
+    }
+    sword_t val1=eval(p,op-1);
+    sword_t val2=eval(op+1,q);
+    switch(tokens[op].type) {
+      case TK_ADD: return val1+val2;
+      case TK_SUB: return val1-val2;
+      case TK_MUL: return val1*val2;
+      case TK_DIV:
+        if (val2==0) {
+          eval_error = -5;
+          return 0;
+        }
+      default: assert(0);
+    }
+  }
+}
+
+sword_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
 
-  /* TODO: Insert codes to evaluate the expression. */
-  TODO();
-
-  return 0;
+  eval_error = 0;
+  sword_t result = eval(0,nr_token-1);
+  if (eval_error<0) {
+    *success = false;
+    return 0;
+  }
+  return result;
 }
