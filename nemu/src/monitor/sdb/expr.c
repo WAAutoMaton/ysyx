@@ -43,6 +43,7 @@ static struct rule {
   {"\\/",TK_DIV},
   {"\\(",TK_LEFT_PAREN},
   {"\\)",TK_RIGHT_PAREN},
+      {"[0-9]+",TK_INTEGER}, // integer
   {"==", TK_EQ},        // equal
 };
 
