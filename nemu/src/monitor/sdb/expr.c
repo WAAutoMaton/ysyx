@@ -172,7 +172,9 @@ static sword_t eval(int p, int q)
       return 0;
     }
     sword_t val1=eval(p,op-1);
+    if (eval_error<0) return 0;
     sword_t val2=eval(op+1,q);
+    if (eval_error<0) return 0;
     switch(tokens[op].type) {
       case TK_ADD: return val1+val2;
       case TK_SUB: return val1-val2;
