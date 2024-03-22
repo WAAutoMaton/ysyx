@@ -127,7 +127,7 @@ static bool check_parentheses(int p,int q)
   if (q-p<=2) return false;
   if (!(tokens[p].type==TK_LEFT_PAREN && tokens[q].type==TK_RIGHT_PAREN)) return false;
   int cnt=0;
-  for(int i=p+1;i<q;i++) {
+  for(int i=p;i<=q;i++) {
     if (tokens[i].type==TK_LEFT_PAREN) cnt++;
     if (tokens[i].type==TK_RIGHT_PAREN) cnt--;
     if (cnt<0) {
