@@ -135,6 +135,14 @@ static bool check_parentheses(int p,int q)
       return false;
     }
   }
+  cnt=0;
+  for(int i=p+1;i<q;i++) {
+    if (tokens[i].type==TK_LEFT_PAREN) cnt++;
+    if (tokens[i].type==TK_RIGHT_PAREN) cnt--;
+    if (cnt<0) {
+      return false;
+    }
+  }
   return cnt==0;
 }
 
