@@ -44,7 +44,7 @@ static struct rule {
   {"\\(",TK_LEFT_PAREN},
   {"\\)",TK_RIGHT_PAREN},
   {"[0-9]+",TK_INTEGER}, // integer
-  {"\\$[a-z]+",TK_REGISTER}, // register
+  {"\\$[a-z0-9]+",TK_REGISTER}, // register
   {"==", TK_EQ},        // equal
   {"!=", TK_NEQ},        // not equal
   {"&&", TK_AND},        // and
