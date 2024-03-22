@@ -158,6 +158,16 @@ static word_t eval(int p, int q)
   } else if (p==q) {
     if(tokens[p].type==TK_INTEGER) {
       return atoi(tokens[p].str);
+    } else if (tokens[p].type==TK_REGISTER) {
+      const char *reg_name = tokens[p].str+1;
+      bool success = true;
+      int reg_value = isa_reg_str2val(reg_name, &success);
+      if (!success) {
+        puts("Invalid register name");
+        eval_error = -6;
+        return 0;
+      }
+      return reg_value;
     } else {
       eval_error = -1;
       return 0;
