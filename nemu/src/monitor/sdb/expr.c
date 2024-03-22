@@ -192,6 +192,7 @@ static sword_t eval(int p, int q)
           eval_error = -5;
           return 0;
         }
+        return val1/val2;
       default: assert(0);
     }
   }
