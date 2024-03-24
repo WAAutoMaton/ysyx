@@ -182,15 +182,40 @@ static word_t eval(int p, int q)
   // <expr> <op> <expr>
   {
     int op=-1;
+    int priority=-1;
     int paren_cnt=0;
     for(int i=p; i<=q; i++) {
       if (tokens[i].type==TK_LEFT_PAREN) paren_cnt++;
       else if (tokens[i].type==TK_RIGHT_PAREN) paren_cnt--;
       else if (paren_cnt==0) {
-        if (tokens[i].type==TK_ADD || tokens[i].type==TK_SUB) {
-          op=i;
-        } else if (tokens[i].type==TK_MUL || tokens[i].type==TK_DIV) {
-          if (op==-1 || tokens[op].type==TK_MUL || tokens[op].type==TK_DIV) op=i;
+        switch(tokens[i].type) {
+          case TK_EQ:
+          case TK_NEQ:
+            if (priority <=7) {
+              op=i;
+              priority = 7;
+            }
+            break;
+          case TK_ADD:
+          case TK_SUB:
+            if (priority <=4) {
+              op=i;
+              priority = 4;
+            }
+            break;
+          case TK_MUL:
+          case TK_DIV:
+            if (priority<=3) {
+              op=i;
+              priority = 3;
+            }
+            break;
+          case TK_AND:
+            if (priority<=11) {
+              op=i;
+              priority = 11;
+            }
+            break;
         }
       }
     }
@@ -209,6 +234,9 @@ static word_t eval(int p, int q)
             return 0;
           }
           return val1/val2;
+        case TK_EQ: return val1==val2;
+        case TK_NEQ: return val1!=val2;
+        case TK_AND: return val1&&val2;
         default: assert(0);
       }
     }
