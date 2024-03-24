@@ -84,6 +84,7 @@ static int cmd_info(char *args) {
       WP* now = get_wp_list();
       while(now!=NULL) {
         printf("ID: %d, EXPR: %s\n",now->NO,now->expr);
+        now=now->next;
       }
     } else {
         puts(info_help);
