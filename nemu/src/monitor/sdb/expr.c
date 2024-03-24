@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include <isa.h>
+#include <memory/vaddr.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -23,8 +24,8 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ, TK_ADD, TK_SUB, TK_MUL, TK_DIV,
-  TK_LEFT_PAREN, TK_RIGHT_PAREN, TK_INTEGER, TK_REGISTER, TK_NEQ, TK_AND
-
+  TK_LEFT_PAREN, TK_RIGHT_PAREN, TK_INTEGER, TK_REGISTER, TK_NEQ, TK_AND,
+  TK_DEREF
 };
 
 static struct rule {
@@ -173,10 +174,13 @@ static word_t eval(int p, int q)
       eval_error = -1;
       return 0;
     }
-  } else if (check_parentheses(p,q)) {
+  } 
+  if (check_parentheses(p,q)) {
     return eval(p+1,q-1);
-  } else {
-    if (eval_error<0) return 0; 
+  } 
+  if (eval_error<0) return 0; 
+  // <expr> <op> <expr>
+  {
     int op=-1;
     int paren_cnt=0;
     for(int i=p; i<=q; i++) {
@@ -190,33 +194,48 @@ static word_t eval(int p, int q)
         }
       }
     }
-    if (op==-1) {
-      eval_error = -4;
-      return 0;
-    }
-    word_t val1=eval(p,op-1);
-    if (eval_error<0) return 0;
-    word_t val2=eval(op+1,q);
-    if (eval_error<0) return 0;
-    switch(tokens[op].type) {
-      case TK_ADD: return val1+val2;
-      case TK_SUB: return val1-val2;
-      case TK_MUL: return val1*val2;
-      case TK_DIV:
-        if (val2==0) {
-          eval_error = -5;
-          return 0;
-        }
-        return val1/val2;
-      default: assert(0);
+    if (op!=-1) {
+      word_t val1=eval(p,op-1);
+      if (eval_error<0) return 0;
+      word_t val2=eval(op+1,q);
+      if (eval_error<0) return 0;
+      switch(tokens[op].type) {
+        case TK_ADD: return val1+val2;
+        case TK_SUB: return val1-val2;
+        case TK_MUL: return val1*val2;
+        case TK_DIV:
+          if (val2==0) {
+            eval_error = -5;
+            return 0;
+          }
+          return val1/val2;
+        default: assert(0);
+      }
     }
   }
+  // * <expr>
+  if (tokens[p].type==TK_DEREF) {
+    word_t address = eval(p+1,q);
+    if (eval_error==0) {
+      word_t val = vaddr_read(address, 4);
+      return val;
+    }
+  }
+  // Parse failed
+  eval_error =-6;
+  return 0;
 }
 
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
+  }
+  
+  for (int i=0; i<nr_token; i++) {
+    if (tokens[i].type == TK_MUL && (i==0 || !(tokens[i-1].type==TK_INTEGER || tokens[i-1].type==TK_RIGHT_PAREN || tokens[i-1].type==TK_REGISTER))) {
+      tokens[i].type = TK_DEREF;
+    }
   }
 
   eval_error = 0;
