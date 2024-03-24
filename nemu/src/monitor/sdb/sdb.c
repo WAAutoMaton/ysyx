@@ -13,12 +13,14 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include <stdlib.h>
 #include <isa.h>
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/vaddr.h>
+#include "watchpoint.h"
 
 static int is_batch_mode = false;
 
@@ -123,7 +125,32 @@ static int cmd_x(char *args) {
     return 0;
 }
 
-static int cmd_d(char *args){return 0;}
+static int cmd_d(char *args)
+{
+  if (args==NULL) {
+    puts("Format: d <ID>");
+    return 0;
+  }
+  int id=atoi(args);
+  if (id<=0 || id>NR_WP) {
+    puts("Format: d <ID>");
+    return 0;
+  }
+  WP* now = get_wp_list();
+  if (now->NO==id) {
+    free_wp(now,NULL);
+    return 0;
+  }
+  while(now!=NULL) {
+    WP* nxt = now->next;
+    if (nxt!=NULL && nxt->NO==id) {
+      free_wp(nxt,now);
+      return 0;
+    }
+  }
+  puts("WatchPoint not exists!");
+  return 0;
+}
 static int cmd_p(char *args)
 {
   if (args==NULL) {
@@ -139,7 +166,21 @@ static int cmd_p(char *args)
   }
   return 0; 
 }
-static int cmd_w(char *args){return 0;}
+static int cmd_w(char *args)
+{
+  if (args==NULL) {
+    puts("Format: w <EXPR>");
+    return 0;
+  }
+  if (strlen(args)>=WP_MAX_EXPR) {
+    puts("expr too long!");
+    return 0;
+  }
+  WP* wp = new_wp();
+  strcpy(wp->expr,args);
+  printf("ID: %d\n",wp->NO);
+  return 0;
+}
 
 
 static int cmd_help(char *args);
