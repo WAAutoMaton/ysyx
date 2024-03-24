@@ -79,9 +79,12 @@ static int cmd_info(char *args) {
         return 0;
     }
     if (*p=='r') {
-        isa_reg_display();
+      isa_reg_display();
     } else if (*p=='w') {
-
+      WP* now = get_wp_list();
+      while(now!=NULL) {
+        printf("ID: %d, EXPR: %s\n",now->NO,now->expr);
+      }
     } else {
         puts(info_help);
     }
