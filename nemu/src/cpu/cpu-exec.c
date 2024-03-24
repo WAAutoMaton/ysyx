@@ -43,7 +43,24 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 #ifdef CONFIG_WATCHPOINT
-
+  WP* now = get_wp_list();
+  while(now!=NULL) {
+    bool success = false;
+    word_t val = expr(now->expr, &success);
+    if(!success) {
+      printf("Warning: watchpoint %d expr evaluation failed: %s \n", now->NO, now->expr);
+      continue;
+    }
+    if (now->last_value!=val) {
+      printf("Watchpoint %d: %s\n", now->NO, now->expr);
+      printf("Old value = " FMT_WORD "\n", now->last_value);
+      printf("New value = " FMT_WORD "\n", val);
+      now->last_value = val;
+      nemu_state.state = NEMU_STOP;
+      break;
+    }
+    now=now->next;
+  }
 #endif
 }
 

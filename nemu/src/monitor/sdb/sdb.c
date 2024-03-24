@@ -20,6 +20,7 @@
 #include <readline/history.h>
 #include "sdb.h"
 #include <memory/vaddr.h>
+#include "common.h"
 #include "watchpoint.h"
 
 static int is_batch_mode = false;
@@ -180,7 +181,14 @@ static int cmd_w(char *args)
     puts("expr too long!");
     return 0;
   }
+  bool success=true;
+  word_t result=expr(args, &success);
+  if (!success) {
+    puts("Invalid expression");
+    return 0;
+  }
   WP* wp = new_wp();
+  wp->last_value=result;
   strcpy(wp->expr,args);
   printf("ID: %d\n",wp->NO);
   return 0;
