@@ -214,4 +214,7 @@ config RT_CHECK
   bool "Enable runtime checking"
   default y
 
+config WATCH_POINT
+  bool "Enable WatchPoint"
+
 endmenu
