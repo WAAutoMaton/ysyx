@@ -49,6 +49,7 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
     word_t val = expr(now->expr, &success);
     if(!success) {
       printf("Warning: watchpoint %d expr evaluation failed: %s \n", now->NO, now->expr);
+      now=now->next;
       continue;
     }
     if (now->last_value!=val) {
