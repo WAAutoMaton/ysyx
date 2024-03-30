@@ -16,6 +16,7 @@
 #include "common.h"
 #include <isa.h>
 #include <memory/vaddr.h>
+#include <errno.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -44,7 +45,7 @@ static struct rule {
   {"\\/",TK_DIV},
   {"\\(",TK_LEFT_PAREN},
   {"\\)",TK_RIGHT_PAREN},
-  {"[0-9]+",TK_INTEGER}, // integer
+  {"(0x|0X)?[a-fA-F0-9]+",TK_INTEGER}, // integer
   {"\\$[a-z0-9]+",TK_REGISTER}, // register
   {"==", TK_EQ},        // equal
   {"!=", TK_NEQ},        // not equal
@@ -159,7 +160,13 @@ static word_t eval(int p, int q)
     return 0;
   } else if (p==q) {
     if(tokens[p].type==TK_INTEGER) {
-      return atoi(tokens[p].str);
+      word_t value=strtol(tokens[p].str, NULL, 0);
+      if (errno==ERANGE) {
+        puts("Integer out of range!");
+        eval_error = -3;
+        return 0;
+      }
+      return value;
     } else if (tokens[p].type==TK_REGISTER) {
       const char *reg_name = tokens[p].str+1;
       bool success = true;
