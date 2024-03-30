@@ -14,13 +14,34 @@
 ***************************************************************************************/
 
 #include <common.h>
+#include "monitor/sdb/sdb.h"
 
 void init_monitor(int, char *[]);
 void am_init_monitor();
 void engine_start();
 int is_exit_status_bad();
 
+static void test_expr() {
+    FILE *input_file = fopen("./input", "r");
+    word_t answer;
+    while(fscanf(input_file, "%u", &answer) != EOF) {
+        char expr_str[65536];
+        fgets(expr_str, 65536, input_file);
+        bool ok;
+        word_t result = expr(expr_str, &ok);
+        if (!ok) {
+          printf("Test failed: %s -> FAILED, expect %u\n", expr_str, answer);
+        } else if (result != answer) {
+            printf("Test failed: %s -> %u, expect %u\n", expr_str, result, answer);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
+  if (argc == 2 && strcmp(argv[1], "--test-expr")==0) {
+    test_expr();
+    return 0;
+  }
   /* Initialize the monitor. */
 #ifdef CONFIG_TARGET_AM
   am_init_monitor();
