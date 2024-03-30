@@ -133,7 +133,7 @@ static bool make_token(char *e) {
 static int eval_error;
 static bool check_parentheses(int p,int q)
 {
-  if (q-p<=2) return false;
+  if (q-p<2) return false;
   if (!(tokens[p].type==TK_LEFT_PAREN && tokens[q].type==TK_RIGHT_PAREN)) return false;
   int cnt=0;
   for(int i=p;i<=q;i++) {
