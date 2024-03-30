@@ -163,12 +163,6 @@ static word_t eval(int p, int q)
   } else if (p==q) {
     if(tokens[p].type==TK_INTEGER) {
       int64_t value=strtol(tokens[p].str, NULL, 0);
-      if (((value==LONG_MIN || value==LONG_MAX) && errno==ERANGE) || value > UINT32_MAX) {
-        errno=0;
-        puts("Integer out of range!");
-        eval_error = -3;
-        return 0;
-      }
       return (word_t)value;
     } else if (tokens[p].type==TK_REGISTER) {
       const char *reg_name = tokens[p].str+1;
