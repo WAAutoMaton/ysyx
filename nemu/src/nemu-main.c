@@ -38,7 +38,7 @@ static void test_expr() {
 }
 
 int main(int argc, char *argv[]) {
-  if (argc == 2 && strcmp(argv[1], "--test-expr")==0) {
+  if (argc == 3 && strcmp(argv[2], "--test-expr")==0) {
     test_expr();
     return 0;
   }
