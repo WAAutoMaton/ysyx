@@ -43,6 +43,8 @@ static void test_expr() {
 
 int main(int argc, char *argv[]) {
   if (argc == 3 && strcmp(argv[2], "--expr-test")==0) {
+    void init_regex();
+    init_regex();
     test_expr();
     return 0;
   }
