@@ -163,6 +163,7 @@ static word_t eval(int p, int q)
     if(tokens[p].type==TK_INTEGER) {
       uint64_t value=strtol(tokens[p].str, NULL, 0);
       if (errno==ERANGE || value > UINT32_MAX) {
+        errno=0;
         puts("Integer out of range!");
         eval_error = -3;
         return 0;
