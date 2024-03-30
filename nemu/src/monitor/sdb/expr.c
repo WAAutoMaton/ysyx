@@ -47,7 +47,7 @@ static struct rule {
   {"\\/",TK_DIV},
   {"\\(",TK_LEFT_PAREN},
   {"\\)",TK_RIGHT_PAREN},
-  {"(0x|0X)?[a-fA-F0-9]+",TK_INTEGER}, // integer
+  {"(0x|0X)?[a-fA-F0-9]+[U]?",TK_INTEGER}, // integer
   {"\\$[a-z0-9]+",TK_REGISTER}, // register
   {"==", TK_EQ},        // equal
   {"!=", TK_NEQ},        // not equal
