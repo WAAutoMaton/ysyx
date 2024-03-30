@@ -31,6 +31,9 @@ static void test_expr() {
     while(fscanf(input_file, "%u", &answer) != EOF) {
         char expr_str[65536];
         fgets(expr_str, 65536, input_file);
+        if (expr_str[strlen(expr_str) - 1] == '\n') {
+            expr_str[strlen(expr_str) - 1] = '\0';
+        }
         bool ok;
         word_t result = expr(expr_str, &ok);
         if (!ok) {
