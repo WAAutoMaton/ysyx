@@ -23,6 +23,10 @@ int is_exit_status_bad();
 
 static void test_expr() {
     FILE *input_file = fopen("./input", "r");
+    if (input_file == NULL) {
+      puts("Input file not found");
+        return;
+    }
     word_t answer;
     while(fscanf(input_file, "%u", &answer) != EOF) {
         char expr_str[65536];
