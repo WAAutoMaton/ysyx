@@ -254,7 +254,7 @@ static word_t eval(int p, int q)
     }
   }
   // Parse failed
-  eval_error =-6;
+  eval_error =-7;
   return 0;
 }
 
