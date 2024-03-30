@@ -17,6 +17,7 @@
 #include <isa.h>
 #include <memory/vaddr.h>
 #include <errno.h>
+#include <limits.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -161,8 +162,8 @@ static word_t eval(int p, int q)
     return 0;
   } else if (p==q) {
     if(tokens[p].type==TK_INTEGER) {
-      uint64_t value=strtol(tokens[p].str, NULL, 0);
-      if (errno==ERANGE || value > UINT32_MAX) {
+      int64_t value=strtol(tokens[p].str, NULL, 0);
+      if (((value==LONG_MIN || value==LONG_MAX) && errno==ERANGE) || value > UINT32_MAX) {
         errno=0;
         puts("Integer out of range!");
         eval_error = -3;
