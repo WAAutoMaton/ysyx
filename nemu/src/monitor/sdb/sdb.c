@@ -13,11 +13,16 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include <stdlib.h>
 #include <isa.h>
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <memory/vaddr.h>
+#include "common.h"
+#include "utils.h"
+#include "watchpoint.h"
 
 static int is_batch_mode = false;
 
@@ -49,8 +54,148 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
 }
+
+static int cmd_si(char *args) {
+    int n=0;
+    if (args!=NULL) {
+        n=atoi(args);
+    }
+    if (n<=0) n=1;
+    printf("Execute %d steps\n", n);
+    cpu_exec(n);
+    return 0;
+}
+
+
+static int cmd_info(char *args) {
+    static const char info_help[] = "Format: info <r|w>";
+    if (args==NULL) {
+        puts(info_help);
+        return 0;
+    }
+    char *p=strtok(args, " ");
+    if (p==NULL || strlen(p)!=1) {
+        puts(info_help);
+        return 0;
+    }
+    if (*p=='r') {
+      isa_reg_display();
+    } else if (*p=='w') {
+      WP* now = get_wp_list();
+      while(now!=NULL) {
+        printf("ID: %d, EXPR: %s\n",now->NO,now->expr);
+        now=now->next;
+      }
+    } else {
+        puts(info_help);
+    }
+    return 0;
+}
+
+static int cmd_x(char *args) {
+    const char *x_help = "Format: x N EXPR";
+    if (args==NULL) {
+        puts(x_help);
+        return 0;
+    }
+    char *p_N=strtok(args, " ");
+    if (p_N==NULL) {
+        puts(x_help);
+        return 0;
+    }
+    int N=atoi(p_N);
+    if (N<=0) {
+        puts(x_help);
+        return 0;
+    }
+    char *p_EXPR=strtok(NULL, " ");
+    if (p_EXPR==NULL) {
+        puts(x_help);
+        return 0;
+    }
+    long long addr=atoll(p_EXPR);
+    if (addr<=0) {
+        puts(x_help);
+        return 0;
+    }
+    for(int i=0; i<N; i++) {
+        printf("0x%08llx: ", addr);
+        for(int j=0; j<4; j++) {
+            printf("%02x ", vaddr_read(addr, 1));
+            addr++;
+        }
+        printf("\n");
+    }
+    return 0;
+}
+
+static int cmd_d(char *args)
+{
+  if (args==NULL) {
+    puts("Format: d <ID>");
+    return 0;
+  }
+  int id=atoi(args);
+  if (id<=0 || id>NR_WP) {
+    puts("Format: d <ID>");
+    return 0;
+  }
+  WP* now = get_wp_list();
+  if (now->NO==id) {
+    free_wp(now,NULL);
+    return 0;
+  }
+  while(now!=NULL) {
+    WP* nxt = now->next;
+    if (nxt!=NULL && nxt->NO==id) {
+      free_wp(nxt,now);
+      return 0;
+    }
+  }
+  puts("WatchPoint not exists!");
+  return 0;
+}
+static int cmd_p(char *args)
+{
+  if (args==NULL) {
+    puts("Format: p EXPR");
+    return 0;
+  }
+  bool success=true;
+  word_t result=expr(args, &success);
+  if (success) {
+    printf("%llu\n", (unsigned long long)result);
+  } else {
+    puts("Invalid expression");
+  }
+  return 0; 
+}
+static int cmd_w(char *args)
+{
+  if (args==NULL) {
+    puts("Format: w <EXPR>");
+    return 0;
+  }
+  if (strlen(args)>=WP_MAX_EXPR) {
+    puts("expr too long!");
+    return 0;
+  }
+  bool success=true;
+  word_t result=expr(args, &success);
+  if (!success) {
+    puts("Invalid expression");
+    return 0;
+  }
+  WP* wp = new_wp();
+  wp->last_value=result;
+  strcpy(wp->expr,args);
+  printf("ID: %d\n",wp->NO);
+  return 0;
+}
+
 
 static int cmd_help(char *args);
 
@@ -62,6 +207,12 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "Execute N steps", cmd_si},
+  { "info", "Show registers or watchpoint", cmd_info},
+  { "x", "Scan memory", cmd_x},
+  { "p", "Print expression", cmd_p},
+  { "w", "Set watchpoint", cmd_w},
+  { "d", "Delete watchpoint", cmd_d},
 
   /* TODO: Add more commands */
 

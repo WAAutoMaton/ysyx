@@ -13,18 +13,22 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "common.h"
 #include <isa.h>
+#include <memory/vaddr.h>
+#include <errno.h>
+#include <limits.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <stdint.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,
-
-  /* TODO: Add more token types */
-
+  TK_NOTYPE = 256, TK_EQ, TK_ADD, TK_SUB, TK_MUL, TK_DIV,
+  TK_LEFT_PAREN, TK_RIGHT_PAREN, TK_INTEGER, TK_REGISTER, TK_NEQ, TK_AND,
+  TK_DEREF
 };
 
 static struct rule {
@@ -37,8 +41,17 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
+  {"\\+",TK_ADD},         // plus
+  {"\\-",TK_SUB},
+  {"\\*",TK_MUL},
+  {"\\/",TK_DIV},
+  {"\\(",TK_LEFT_PAREN},
+  {"\\)",TK_RIGHT_PAREN},
+  {"(0x|0X)?[a-fA-F0-9]+[U]?",TK_INTEGER}, // integer
+  {"\\$[a-z0-9]+",TK_REGISTER}, // register
   {"==", TK_EQ},        // equal
+  {"!=", TK_NEQ},        // not equal
+  {"&&", TK_AND},        // and
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -67,7 +80,8 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+#define MAX_TOKENS 10000
+static Token tokens[MAX_TOKENS] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -93,9 +107,14 @@ static bool make_token(char *e) {
          * to record the token in the array `tokens'. For certain types
          * of tokens, some extra actions should be performed.
          */
-
-        switch (rules[i].token_type) {
-          default: TODO();
+        if (rules[i].token_type!=TK_NOTYPE) {
+          tokens[nr_token].type = rules[i].token_type;
+          if (substr_len>31) {
+            puts("Token too long!");
+            return false;
+          }
+          strncpy(tokens[nr_token].str, substr_start, substr_len);
+          nr_token++;
         }
 
         break;
@@ -111,15 +130,157 @@ static bool make_token(char *e) {
   return true;
 }
 
+static int eval_error;
+static bool check_parentheses(int p,int q)
+{
+  if (q-p<2) return false;
+  if (!(tokens[p].type==TK_LEFT_PAREN && tokens[q].type==TK_RIGHT_PAREN)) return false;
+  int cnt=0;
+  for(int i=p;i<=q;i++) {
+    if (tokens[i].type==TK_LEFT_PAREN) cnt++;
+    if (tokens[i].type==TK_RIGHT_PAREN) cnt--;
+    if (cnt<0) {
+      eval_error = -3;
+      return false;
+    }
+  }
+  cnt=0;
+  for(int i=p+1;i<q;i++) {
+    if (tokens[i].type==TK_LEFT_PAREN) cnt++;
+    if (tokens[i].type==TK_RIGHT_PAREN) cnt--;
+    if (cnt<0) {
+      return false;
+    }
+  }
+  return cnt==0;
+}
+
+static word_t eval(int p, int q)
+{
+  if (p>q) {
+    eval_error = -2;
+    return 0;
+  } else if (p==q) {
+    if(tokens[p].type==TK_INTEGER) {
+      int64_t value=strtol(tokens[p].str, NULL, 0);
+      return (word_t)value;
+    } else if (tokens[p].type==TK_REGISTER) {
+      const char *reg_name = tokens[p].str+1;
+      bool success = true;
+      int reg_value = isa_reg_str2val(reg_name, &success);
+      if (!success) {
+        puts("Invalid register name");
+        eval_error = -6;
+        return 0;
+      }
+      return reg_value;
+    } else {
+      eval_error = -1;
+      return 0;
+    }
+  } 
+  if (check_parentheses(p,q)) {
+    return eval(p+1,q-1);
+  } 
+  if (eval_error<0) return 0; 
+  // <expr> <op> <expr>
+  {
+    int op=-1;
+    int priority=-1;
+    int paren_cnt=0;
+    for(int i=p; i<=q; i++) {
+      if (tokens[i].type==TK_LEFT_PAREN) paren_cnt++;
+      else if (tokens[i].type==TK_RIGHT_PAREN) paren_cnt--;
+      else if (paren_cnt==0) {
+        switch(tokens[i].type) {
+          case TK_EQ:
+          case TK_NEQ:
+            if (priority <=7) {
+              op=i;
+              priority = 7;
+            }
+            break;
+          case TK_ADD:
+          case TK_SUB:
+            if (priority <=4) {
+              op=i;
+              priority = 4;
+            }
+            break;
+          case TK_MUL:
+          case TK_DIV:
+            if (priority<=3) {
+              op=i;
+              priority = 3;
+            }
+            break;
+          case TK_AND:
+            if (priority<=11) {
+              op=i;
+              priority = 11;
+            }
+            break;
+        }
+      }
+    }
+    if (op!=-1) {
+      word_t val1=eval(p,op-1);
+      if (eval_error<0) return 0;
+      word_t val2=eval(op+1,q);
+      if (eval_error<0) return 0;
+      switch(tokens[op].type) {
+        case TK_ADD: return val1+val2;
+        case TK_SUB: return val1-val2;
+        case TK_MUL: return val1*val2;
+        case TK_DIV:
+          if (val2==0) {
+            eval_error = -5;
+            return 0;
+          }
+          return val1/val2;
+        case TK_EQ: return val1==val2;
+        case TK_NEQ: return val1!=val2;
+        case TK_AND: return val1&&val2;
+        default: assert(0);
+      }
+    }
+  }
+  // * <expr>
+  if (tokens[p].type==TK_DEREF) {
+    word_t address = eval(p+1,q);
+    if (eval_error==0) {
+      word_t val = vaddr_read(address, 4);
+      return val;
+    }
+  }
+  // Parse failed
+  eval_error =-7;
+  return 0;
+}
 
 word_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
     return 0;
   }
+  
+  for (int i=0; i<nr_token; i++) {
+    if (tokens[i].type == TK_MUL && (i==0 || !(tokens[i-1].type==TK_INTEGER || tokens[i-1].type==TK_RIGHT_PAREN || tokens[i-1].type==TK_REGISTER))) {
+      tokens[i].type = TK_DEREF;
+    }
+  }
 
-  /* TODO: Insert codes to evaluate the expression. */
-  TODO();
-
-  return 0;
+  eval_error = 0;
+  word_t result = eval(0,nr_token-1);
+  if (eval_error<0) {
+    if (eval_error==-5) {
+      puts("Divided by zero!");
+    } else {
+      printf("Expression error: %d\n", eval_error);
+    }
+    *success = false;
+    return 0;
+  }
+  *success=true;
+  return result;
 }
