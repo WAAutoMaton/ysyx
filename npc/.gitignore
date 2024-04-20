@@ -10,3 +10,6 @@
 !.gitignore
 !README.md
 build/
+obj_dir
+logs
+verilator_example/

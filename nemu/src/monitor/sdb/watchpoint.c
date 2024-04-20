@@ -53,5 +53,4 @@ WP* get_wp_list() {
   return head;
 }
 
-/* TODO: Implement the functionality of watchpoint */
 
