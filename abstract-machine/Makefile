@@ -1,5 +1,6 @@
 # Makefile for AbstractMachine Kernels and Libraries
 
+NEMUFLAGS = --batch
 ### *Get a more readable version of this Makefile* by `make html` (requires python-markdown)
 html:
 	cat Makefile | sed 's/^\([^#]\)/    \1/g' | markdown_py > Makefile.html
@@ -161,3 +162,4 @@ clean-all: $(CLEAN_ALL) clean
 $(CLEAN_ALL):
 	-@$(MAKE) -s -C $@ clean
 .PHONY: clean-all $(CLEAN_ALL)
+NEMU_FLAGS = --batch

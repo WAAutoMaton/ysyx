@@ -289,4 +289,10 @@ void init_sdb() {
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+
+#ifdef CONFIG_ITRACE_COND
+  if (ITRACE_COND) { 
+  instruction_ring_buffer_init();
+  }
+#endif
 }

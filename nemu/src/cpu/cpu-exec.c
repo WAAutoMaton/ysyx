@@ -13,6 +13,7 @@
 * See the Mulan PSL v2 for more details.
 ***************************************************************************************/
 
+#include "utils.h"
 #include <cpu/cpu.h>
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
@@ -34,11 +35,33 @@ uint64_t g_nr_guest_inst = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 
+char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
+int instruction_ring_buffer_head, instruction_ring_buffer_tail;
+void instruction_ring_buffer_init() {
+  instruction_ring_buffer_head = 0;
+  instruction_ring_buffer_tail = 0;
+}
+void instruction_ring_buffer_write() {
+  for (int i = instruction_ring_buffer_head; i != instruction_ring_buffer_tail; (i==INSTRUCTION_LOG_BUF_SIZE-1)?i=0:i++) {
+    log_write("%s\n", instruction_ring_buffer[i]);
+  }
+}
+
 void device_update();
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  if (ITRACE_COND) { 
+    //log_write("%s\n", _this->logbuf); 
+    memcpy(instruction_ring_buffer[instruction_ring_buffer_tail], _this->logbuf, sizeof(_this->logbuf));
+    int tail = instruction_ring_buffer_tail+1;
+    if (tail == INSTRUCTION_LOG_BUF_SIZE) tail = 0;
+    if (tail == instruction_ring_buffer_head) {
+      instruction_ring_buffer_head ++;
+      if (instruction_ring_buffer_head == INSTRUCTION_LOG_BUF_SIZE) instruction_ring_buffer_head = 0;
+    }
+    instruction_ring_buffer_tail = tail;
+  }
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));

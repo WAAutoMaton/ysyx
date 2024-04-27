@@ -15,6 +15,7 @@
 
 #include <common.h>
 #include "monitor/sdb/sdb.h"
+#include "utils.h"
 
 void init_monitor(int, char *[]);
 void am_init_monitor();
@@ -62,6 +63,12 @@ int main(int argc, char *argv[]) {
 
   /* Start engine. */
   engine_start();
+
+#ifdef CONFIG_ITRACE_COND
+  if (ITRACE_COND) { 
+  instruction_ring_buffer_write();
+  }
+#endif
 
   return is_exit_status_bad();
 }

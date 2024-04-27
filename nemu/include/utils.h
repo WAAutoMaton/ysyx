@@ -56,6 +56,14 @@ uint64_t get_time();
 
 #define ANSI_FMT(str, fmt) fmt str ANSI_NONE
 
+#define INSTRUCTION_LOG_BUF_SIZE 1024
+
+extern char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
+extern int instruction_ring_buffer_head, instruction_ring_buffer_tail;
+
+void instruction_ring_buffer_init();
+void instruction_ring_buffer_write();
+
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
   do { \
     extern FILE* log_fp; \
