@@ -56,13 +56,28 @@ uint64_t get_time();
 
 #define ANSI_FMT(str, fmt) fmt str ANSI_NONE
 
-#define INSTRUCTION_LOG_BUF_SIZE 1024
+#define INSTRUCTION_LOG_BUF_SIZE 4096
+
+typedef struct 
+{
+  char *name;
+  uint32_t start_addr;
+  uint32_t end_addr;
+} SymbolFunc;
 
 extern char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
 extern int instruction_ring_buffer_head, instruction_ring_buffer_tail;
+extern SymbolFunc* symbol_funcs;
+extern int symbol_func_num;
+
+extern char* elf_file_content;
 
 void instruction_ring_buffer_init();
 void instruction_ring_buffer_write();
+
+void ftrace_init(const char *elf_file);
+void ftrace_close();
+void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
 
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
   do { \

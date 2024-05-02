@@ -69,6 +69,7 @@ int main(int argc, char *argv[]) {
   instruction_ring_buffer_write();
   }
 #endif
-
+  ftrace_close();
+  
   return is_exit_status_bad();
 }

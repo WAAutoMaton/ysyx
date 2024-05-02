@@ -283,7 +283,7 @@ void sdb_mainloop() {
   }
 }
 
-void init_sdb() {
+void init_sdb(const char* elf_file) {
   /* Compile the regular expressions. */
   init_regex();
 
@@ -295,4 +295,6 @@ void init_sdb() {
   instruction_ring_buffer_init();
   }
 #endif
+
+  ftrace_init(elf_file);
 }
