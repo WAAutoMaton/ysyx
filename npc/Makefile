@@ -2,7 +2,7 @@
 all:
 
 run: sim
-	./obj_dir/VTopLevel +trace
+	./obj_dir/VTopLevel +trace $(IMG)
 
 sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!

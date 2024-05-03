@@ -18,6 +18,7 @@ void putch(char ch) {
 }
 
 void halt(int code) {
+  __asm__("ebreak");
   while (1);
 }
 
