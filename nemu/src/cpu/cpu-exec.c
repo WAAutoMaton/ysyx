@@ -156,22 +156,21 @@ void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
   }
   if (func_before==func_after) {
     if (rd==1) {
-      Log("%x: %*sFunction Call: %s to %s", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
       stack_depth++;
     } else if (rd==0 && !is_jal) {
       if (stack_depth>0) stack_depth--;
-      Log("%x: %*sFunction return: %s to [%s@%x]", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
     }
   } else {
     if (is_call) {
-      Log("%x: %*sFunction Call: %s to %s", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
       stack_depth++;
     } else {
       if (stack_depth>0) stack_depth--;
-      Log("%x: %*sFunction return: %s to [%s@%x]", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
     }
   }
-
 }
 
 void device_update();

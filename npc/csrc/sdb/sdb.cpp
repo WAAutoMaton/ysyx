@@ -15,15 +15,21 @@
 
 #include <stddef.h>
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <fcntl.h>
+#include <elf.h>
+#include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include "sdb.h"
 #include "../common.h"
-//#include "utils.h"
 #include "watchpoint.h"
 #include "../isa/isa.h"
+#include "../utils/disasm.h"
 
 static int is_batch_mode = false;
 
@@ -292,7 +298,166 @@ void init_sdb(const char* elf_file) {
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 
-  //TODO: instruction_ring_buffer_init();
+  instruction_ring_buffer_init();
 
-  //TODO: ftrace_init(elf_file);
+  init_disasm("riscv32");
+
+  ftrace_init(elf_file);
+}
+
+char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
+int instruction_ring_buffer_head, instruction_ring_buffer_tail;
+void instruction_ring_buffer_init() {
+  instruction_ring_buffer_head = 0;
+  instruction_ring_buffer_tail = 0;
+}
+void instruction_ring_buffer_write() {
+  for (int i = instruction_ring_buffer_head; i != instruction_ring_buffer_tail; (i==INSTRUCTION_LOG_BUF_SIZE-1)?i=0:i++) {
+    log_write("%s\n", instruction_ring_buffer[i]);
+  }
+}
+void instruction_ring_buffer_push(word_t code, word_t pc)
+{
+  char disasm_buf[96];
+  uint8_t code_buf[4];
+  for(int i = 0; i < 4; i++) {
+    code_buf[i] = (code >> (i * 8)) & 0xff;
+  }
+  disassemble(disasm_buf, 96, pc, code_buf, 4);
+  char log_buf[128];
+  sprintf(log_buf, "0x%08x: %02x %02x %02x %02x\t%s", pc, code_buf[0], code_buf[1], code_buf[2], code_buf[3], disasm_buf);
+  memcpy(instruction_ring_buffer[instruction_ring_buffer_tail], log_buf, sizeof(log_buf));
+  int tail = instruction_ring_buffer_tail+1;
+  if (tail == INSTRUCTION_LOG_BUF_SIZE) tail = 0;
+  if (tail == instruction_ring_buffer_head) {
+    instruction_ring_buffer_head ++;
+    if (instruction_ring_buffer_head == INSTRUCTION_LOG_BUF_SIZE) instruction_ring_buffer_head = 0;
+  }
+  instruction_ring_buffer_tail = tail;
+}
+
+SymbolFunc *symbol_funcs;
+int symbol_func_num;
+
+void ftrace_init(const char* elf_file) {
+  if (elf_file == NULL) {
+    Log("No ELF file is given. ftrace is disabled.");
+    symbol_func_num=0;
+    symbol_funcs=NULL;
+    return;
+  }
+  Log("Reading ELF file %s", elf_file);
+  int fd = open(elf_file, O_RDONLY);
+  if (fd < 0) 
+    panic("Failed to open %s", elf_file);
+  struct stat sb;
+  if (fstat(fd, &sb) < 0) 
+    panic("Failed to fstat %s", elf_file);
+  void *file = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (file == MAP_FAILED) panic("Failed to mmap %s", elf_file);
+  Elf32_Ehdr *header = (Elf32_Ehdr*)file;
+  if (memcmp(header->e_ident, ELFMAG, SELFMAG) != 0) 
+    panic("%s is not an ELF file", elf_file);
+  Elf32_Shdr *sections = (Elf32_Shdr*)((uint8_t*)file + header->e_shoff);
+
+  int func_cnt = 0;
+  for(int i=0; i<header->e_shnum; i++) {
+    if (sections[i].sh_type==SHT_SYMTAB) {
+      Elf32_Sym *symtab = (Elf32_Sym *)((uint8_t*)file + sections[i].sh_offset);
+      int num_sym = sections[i].sh_size / sections[i].sh_entsize;
+      Elf32_Shdr *strtab = &sections[sections[i].sh_link];
+      const char *const strtab_p = (const char *)header + strtab->sh_offset;
+
+      Log("Symbol table '%s' contains %d entries:", strtab_p + sections[i].sh_name, num_sym);
+      for (int j = 0; j < num_sym; j++) {
+        Elf32_Sym sym = symtab[j];
+        if (ELF32_ST_TYPE(sym.st_info)==STT_FUNC) {
+          Log("%d: %x, %x, %s", j, sym.st_value, sym.st_size, strtab_p + sym.st_name);
+          func_cnt++;
+        }
+      }
+    }
+  }
+  Log("Total %d functions", func_cnt);
+
+  symbol_funcs = (SymbolFunc *)malloc(sizeof(SymbolFunc) * func_cnt);
+  symbol_func_num = 0;
+  for(int i=0; i<header->e_shnum; i++) {
+    if (sections[i].sh_type==SHT_SYMTAB) {
+      Elf32_Sym *symtab = (Elf32_Sym *)((uint8_t*)file + sections[i].sh_offset);
+      int num_sym = sections[i].sh_size / sections[i].sh_entsize;
+      Elf32_Shdr *strtab = &sections[sections[i].sh_link];
+      const char *const strtab_p = (const char *)header + strtab->sh_offset;
+
+      Log("Symbol table '%s' contains %d entries:", strtab_p + sections[i].sh_name, num_sym);
+      for (int j = 0; j < num_sym; j++) {
+        Elf32_Sym sym = symtab[j];
+        if (ELF32_ST_TYPE(sym.st_info)==STT_FUNC) {
+          symbol_funcs[symbol_func_num].name = strdup(strtab_p + sym.st_name);
+          symbol_funcs[symbol_func_num].start_addr = sym.st_value;
+          symbol_funcs[symbol_func_num].end_addr = sym.st_value + sym.st_size;
+          Log("%s : %x, %x", symbol_funcs[symbol_func_num].name, symbol_funcs[symbol_func_num].start_addr, symbol_funcs[symbol_func_num].end_addr);
+          symbol_func_num++;
+        }
+      }
+    }
+  }
+}
+
+void ftrace_close() {
+  if (symbol_func_num==0) return;
+  Log("Freeing symbol functions");
+  for(int i=0; i<symbol_func_num; i++) {
+    free(symbol_funcs[i].name);
+  }
+  free(symbol_funcs);
+}
+
+void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
+  if (pc_before==0x8000023c) {
+    Log("pc_before = %x, pc_after = %x, rd = %d, is_jal = %d", pc_before, pc_after, rd, is_jal);
+  }
+  static int stack_depth = 0;
+  if (symbol_func_num==0) return;
+  int func_before=-1;
+  for(int i=0; i<symbol_func_num; i++) {
+    if (pc_before>=symbol_funcs[i].start_addr && pc_before<symbol_funcs[i].end_addr) {
+      func_before=i;
+      break;
+    }
+  }
+  int func_after=-1;
+  bool is_call=false;
+  for(int i=0; i<symbol_func_num; i++) {
+    if (pc_after>=symbol_funcs[i].start_addr && pc_after<symbol_funcs[i].end_addr) {
+      func_after=i;
+      is_call = (pc_after==symbol_funcs[i].start_addr);
+      break;
+    }
+  }
+  if (func_before==-1 || func_after==-1) {
+    return;
+  }
+  if (func_before==func_after) {
+    if (rd==1) {
+      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      stack_depth++;
+    } else if (rd==0 && !is_jal) {
+      if (stack_depth>0) stack_depth--;
+      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+    }
+  } else {
+    if (is_call) {
+      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      stack_depth++;
+    } else {
+      if (stack_depth>0) stack_depth--;
+      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+    }
+  }
+}
+
+void assert_fail_msg() {
+  isa_reg_display();
+  //statistic();
 }
