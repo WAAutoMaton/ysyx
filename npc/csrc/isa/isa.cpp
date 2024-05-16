@@ -11,7 +11,7 @@ const char *regs[] = {
 
 uint32_t *reg_ref[32];
 
-uint32_t mem[MEM_SIZE];
+uint8_t mem[MEM_SIZE];
 const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 const std::unique_ptr<VTopLevel> top{new VTopLevel{contextp.get(), "TOP"}};
 
@@ -72,17 +72,17 @@ word_t isa_reg_str2val(const char *s, bool *success) {
 
 word_t paddr_read(paddr_t addr, int len)
 {
-    if (addr < 0x80000000 || addr >= 0x80000000 + MEM_SIZE) {
+    if (addr < CONFIG_MBASE || addr >= CONFIG_MBASE + MEM_SIZE) {
         puts("Invalid memory access");
         return 0;
     }
     switch (len) {
         case 1:
-            return mem[(addr - 0x80000000) / 4] & 0xff;
+            return *guest_to_host(addr);
         case 2:
-            return mem[(addr - 0x80000000) / 4] & 0xffff;
+            return *(uint16_t *)guest_to_host(addr);
         case 4:
-            return mem[(addr - 0x80000000) / 4];
+            return *(uint32_t *)guest_to_host(addr);
         default:
             puts("Invalid memory access");
             return 0;
@@ -91,4 +91,37 @@ word_t paddr_read(paddr_t addr, int len)
 word_t vaddr_read(paddr_t addr, int len)
 {
     return paddr_read(addr, len);
+}
+
+uint8_t* guest_to_host(paddr_t paddr) { return mem + paddr - CONFIG_MBASE; }
+paddr_t host_to_guest(uint8_t *haddr) { return haddr - mem + CONFIG_MBASE; }
+
+CPU_state get_current_cpu_state()
+{
+    CPU_state cpu;
+    for(int i = 0; i < 32; i++) {
+        cpu.gpr[i] = *reg_ref[i];
+    }
+    cpu.pc = top->io_mem_read_address;
+    return cpu;
+}
+
+bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc, vaddr_t npc) {
+  auto cpu = get_current_cpu_state();
+  bool result = true;
+  if (ref_r->pc != npc) {
+    printf("new pc is different at " FMT_WORD "! ref: " FMT_WORD
+           ", NPC: " FMT_WORD "\n",
+           pc, ref_r->pc, npc);
+    result = false;
+  }
+  for (int i = 0; i < 32; i++) {
+    if (ref_r->gpr[i] != cpu.gpr[i]) {
+      printf("reg[%d] is different at pc = " FMT_WORD " ref: " FMT_WORD
+             ",  NPC: " FMT_WORD "\n",
+             i, pc, ref_r->gpr[i], cpu.gpr[i]);
+      result = false;
+    }
+  }
+  return result;
 }

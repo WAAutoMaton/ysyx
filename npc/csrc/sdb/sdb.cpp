@@ -61,8 +61,7 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
-  extern bool npc_good_exit;
-  npc_good_exit=true;
+  npc_status=NPC_STATUS_QUIT;
   return -1;
 }
 

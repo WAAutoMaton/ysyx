@@ -59,8 +59,18 @@
 
 #define panic(format, ...) Assert(0, format, ## __VA_ARGS__)
 
+#define FMT_WORD "0x%08" PRIx32
+#define FMT_PADDR "0x%08" PRIx32
+
+constexpr int NPC_STATUS_GOOD=1;
+constexpr int NPC_STATUS_FAILED=2;
+constexpr int NPC_STATUS_QUIT=3;
+
 typedef uint32_t word_t;
 typedef uint32_t paddr_t;
+typedef word_t vaddr_t;
+
+extern int npc_status;
 
 void log_init();
 

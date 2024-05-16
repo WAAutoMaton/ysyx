@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 FILE* log_fp;
+int npc_status;
 
 bool log_enable(){
     return true;
