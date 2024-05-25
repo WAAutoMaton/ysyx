@@ -16,11 +16,12 @@ class Controller extends Module{
     val imem_en = Output(Bool())
     val reg_read_en = Output(Bool())
     val reg_write_en = Output(Bool())
-    val inst = Input(UInt(32.W))
-    val imm_type = Output(UInt(3.W))
-    val A_sel = Output(UInt(2.W))
-    val B_sel = Output(UInt(2.W))
-    val WB_sel = Output(UInt(2.W))
+    val inst = Input(UInt(Constant.InstLen))
+    val imm_type = Output(UInt(Constant.ImmTypeLen))
+    val A_sel = Output(UInt(Constant.ASelLen))
+    val B_sel = Output(UInt(Constant.BSelLen))
+    val WB_sel = Output(UInt(Constant.WBSelLen))
+    val ALU_sel = Output(UInt(Constant.ALUSelLen))
     val ebreak_en = Output(UInt(8.W))
     val ebreak_code = Output(UInt(8.W))
     val dmem_read_en = Output(Bool())
@@ -42,21 +43,52 @@ class Controller extends Module{
     STATE_WRITE_BACK -> STATE_FETCH_INST,
   ))
 
-  val invalid_signal = List(PCSelV.KEEP, ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 255.U, LdValue.INV, StValue.INV)
+  val invalid_signal = List(PCSelV.KEEP, ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 255.U, LdValue.INV, StValue.INV, ALUSelV.ZERO)
   val map = Array(
+    ADD   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+    SUB   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SUB),
+    XOR   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.XOR),
+    OR    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.OR),
+    AND   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.AND),
+    SLL   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SLL),
+    SRL   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SRL),
+    SRA   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SRA),
+    SLT   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SLT),
+    SLTU  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.REG, ImmType.R, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.SLTU),
 
-    ADDI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
+    ADDI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+    ANDI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.AND),
+    ORI   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.OR),
+    XORI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.XOR),
+    SLLI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU,   0.U, LdValue.INV, StValue.INV, ALUSelV.SLL),
+    SRLI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU,   0.U, LdValue.INV, StValue.INV, ALUSelV.SRL),
+    SRAI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU,   0.U, LdValue.INV, StValue.INV, ALUSelV.SRA),
+    SLTI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU,   0.U, LdValue.INV, StValue.INV, ALUSelV.SLT),
+    SLTIU -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU,   0.U, LdValue.INV, StValue.INV, ALUSelV.SLTU),
 
-    LW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.DMEM , 0.U, LdValue.LW,  StValue.INV),
+    LW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.LW ,   0.U, LdValue.LW,  StValue.INV, ALUSelV.ADD),
+    LB    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.LB ,   0.U, LdValue.LB,  StValue.INV, ALUSelV.ADD),
+    LBU   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.LBU,   0.U, LdValue.LBU, StValue.INV, ALUSelV.ADD),
+    LH    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.LH ,   0.U, LdValue.LH,  StValue.INV, ALUSelV.ADD),
+    LHU   -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.LHU,   0.U, LdValue.LHU, StValue.INV, ALUSelV.ADD),
 
-    SW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.S, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.SW),
+    SW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.S, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.SW,  ALUSelV.ADD),
+    SH    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.S, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.SH,  ALUSelV.ADD),
+    SB    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.S, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.SB,  ALUSelV.ADD),
 
-    JAL   -> List(PCSelV.OVERWRITE, ASelV.PC,   BSelV.IMM, ImmType.J, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV),
-    JALR  -> List(PCSelV.OVERWRITE, ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV),
-    LUI   -> List(PCSelV.INC4,      ASelV.ZERO, BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
-    AUIPC -> List(PCSelV.INC4,      ASelV.PC,   BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
+    BEQ   -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.EQ),
+    BNE   -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.NEQ),
+    BLT   -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.LT),
+    BGE   -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.GE),
+    BLTU  -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.LTU),
+    BGEU  -> List(PCSelV.BRANCH,    ASelV.REG,  BSelV.REG, ImmType.B, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.INV, ALUSelV.GEU),
 
-    EBREAK-> List(PCSelV.KEEP,      ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 1.U, LdValue.INV, StValue.INV),
+    JAL   -> List(PCSelV.OVERWRITE, ASelV.PC,   BSelV.IMM, ImmType.J, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+    JALR  -> List(PCSelV.OVERWRITE, ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+    LUI   -> List(PCSelV.INC4,      ASelV.ZERO, BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+    AUIPC -> List(PCSelV.INC4,      ASelV.PC,   BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV, ALUSelV.ADD),
+
+    EBREAK-> List(PCSelV.KEEP,      ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 1.U, LdValue.INV, StValue.INV, ALUSelV.ZERO),
   )
   val signals = ListLookup(io.inst, invalid_signal, map)
   io.PC_sel := Mux(state=/=STATE_WRITE_BACK, PCSelV.KEEP, signals(0))
@@ -74,4 +106,5 @@ class Controller extends Module{
     StValue.SH -> "b11".U,
     StValue.SW -> "b1111".U,
   ))
+  io.ALU_sel := signals(8)
 }

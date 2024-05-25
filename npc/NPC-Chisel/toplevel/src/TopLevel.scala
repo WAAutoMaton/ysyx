@@ -1,15 +1,13 @@
 import chisel3._
-import chisel3.internal.firrtl.Width
 import chisel3.util.MuxLookup
 
 class TopLevel() extends Module {
-  val DATA_WIDTH: Width = 32.W
   val io = IO(new Bundle {
-    val test_pc = Output(UInt(DATA_WIDTH))
-    val test_regs = Output(Vec(32, UInt(DATA_WIDTH)))
+    val test_pc = Output(UInt(Constant.BitWidth))
+    val test_regs = Output(Vec(32, UInt(Constant.BitWidth)))
     val test_imem_en = Output(Bool())
   })
-  val PC = RegInit(UInt(32.W), 0x80000000L.U)
+  val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
   io.test_pc := PC
 
   val controller = Module(new Controller())
@@ -18,7 +16,7 @@ class TopLevel() extends Module {
   val dmem = Module(new PMem())
   val register_file = Module(new RegisterFile())
   val alu = Module(new ALU())
-  val inst = RegInit(UInt(32.W), 0.U)
+  val inst = RegInit(UInt(Constant.InstLen), 0.U)
   val ebreak_inst = Module(new EBreak())
   val imm_gen = Module(new ImmediateGenerator)
   ebreak_inst.io.enable := controller.io.ebreak_en
@@ -28,6 +26,7 @@ class TopLevel() extends Module {
     PCSelV.KEEP -> PC,
     PCSelV.INC4 -> (PC + 4.U),
     PCSelV.OVERWRITE -> alu.io.result,
+    PCSelV.BRANCH -> Mux(alu.io.result(0), (PC + imm_gen.io.imm), (PC + 4.U)),
   ))
   inst := Mux(controller.io.imem_en, imem.io.rdata, inst)
   controller.io.inst := inst
@@ -36,13 +35,18 @@ class TopLevel() extends Module {
     ASelV.PC -> PC,
   ))
   alu.io.src2 := MuxLookup(controller.io.B_sel, 0.U, Seq(
-    BSelV.REG -> 0.U,
+    BSelV.REG -> register_file.io.reg2_data,
     BSelV.IMM -> imm_gen.io.imm,
   ))
+  alu.io.sel := controller.io.ALU_sel
   register_file.io.write_data := MuxLookup(controller.io.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu.io.result,
     WBSelV.PC4 -> (PC+4.U),
-    WBSelV.DMEM -> dmem.io.rdata,
+    WBSelV.LW -> dmem.io.rdata,
+    WBSelV.LBU -> dmem.io.rdata(7, 0),
+    WBSelV.LHU -> dmem.io.rdata(15, 0),
+    WBSelV.LB -> dmem.io.rdata(7, 0).asSInt.pad(32).asUInt,
+    WBSelV.LH -> dmem.io.rdata(15, 0).asSInt.pad(32).asUInt,
   ))
   register_file.io.write_address := inst(11, 7)
   register_file.io.write_enable := controller.io.reg_write_en
@@ -62,7 +66,7 @@ class TopLevel() extends Module {
   imem.io.wen := false.B
   io.test_imem_en := controller.io.imem_en
 
-  val dmem_write_data = RegInit(UInt(32.W), 0.U)
+  val dmem_write_data = RegInit(UInt(Constant.BitWidth), 0.U)
   dmem_write_data := register_file.io.reg2_data
   dmem.io.valid := controller.io.dmem_read_en || controller.io.dmem_write_en
   dmem.io.raddr := alu.io.result
