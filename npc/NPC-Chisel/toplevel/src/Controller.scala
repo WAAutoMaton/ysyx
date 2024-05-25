@@ -1,4 +1,4 @@
-import Chisel.MuxLookup
+import Chisel.{ListLookup, MuxLookup}
 import chisel3._
 
 object ControllerState extends Enumeration {
@@ -21,24 +21,20 @@ class Controller extends Module{
     val A_sel = Output(UInt(2.W))
     val B_sel = Output(UInt(2.W))
     val WB_sel = Output(UInt(2.W))
+    val ebreak_en = Output(UInt(8.W))
+    val ebreak_code = Output(UInt(8.W))
+    val dmem_read_en = Output(Bool())
+    val dmem_read_type = Output(UInt(4.W))
+    val dmem_write_en = Output(Bool())
+    val dmem_write_mask = Output(UInt(8.W))
   })
+  import Instruction._
   val state = RegInit(UInt(4.W), STATE_IDLE)
   val imm_type = Wire(UInt(3.W))
-  val instruction = Wire(UInt(7.W))
-  io.PC_sel := Mux(state=/=STATE_WRITE_BACK, PCSelValue.KEEP, Mux(
-    imm_type === ImmediateType.J_TYPE, PCSelValue.OVERWRITE, PCSelValue.INC4
-  ))
   io.imm_type := imm_type
   io.imem_en := state===STATE_FETCH_INST
   io.reg_read_en := state===STATE_EXECUTE || state===STATE_WRITE_BACK
-  io.reg_write_en := Mux(state===STATE_WRITE_BACK, true.B,
-    MuxLookup(instruction, false.B, Seq(
-      Instruction.ADDI -> true.B,
-      Instruction.SW -> false.B,
-      Instruction.JAL -> true.B,
-      Instruction.JALR -> true.B,
-      Instruction.LUI -> true.B,
-    )))
+  io.reg_write_en := state===STATE_WRITE_BACK && io.WB_sel=/=WBSelV.NO_WB
   state := MuxLookup(state, STATE_IDLE, Seq(
     STATE_IDLE -> STATE_FETCH_INST,
     STATE_FETCH_INST -> STATE_EXECUTE,
@@ -46,45 +42,36 @@ class Controller extends Module{
     STATE_WRITE_BACK -> STATE_FETCH_INST,
   ))
 
-  imm_type := MuxLookup(io.inst(6,0), ImmediateType.INVALID_TYPE, Seq(
-    0x33.U -> ImmediateType.R_TYPE,
-    0x13.U -> ImmediateType.I_TYPE,
-    0x3.U  -> ImmediateType.I_TYPE,
-    0x23.U -> ImmediateType.S_TYPE,
-    0x63.U -> ImmediateType.B_TYPE,
-    0x6F.U -> ImmediateType.J_TYPE,
-    0x67.U -> ImmediateType.I_TYPE,
-    0x37.U -> ImmediateType.U_TYPE,
-    0x17.U -> ImmediateType.U_TYPE,
-    0x73.U -> ImmediateType.I_TYPE,
-  ))
-  instruction := MuxLookup(io.inst(6,0), Instruction.INVALID, Seq(
-    0x13.U -> Instruction.ADDI,
-    0x23.U -> Instruction.SW,
-    0x6F.U -> Instruction.JAL,
-    0x67.U -> Instruction.JALR,
-    0x37.U -> Instruction.LUI,
-    0x73.U -> Instruction.EBREAK,
-  ))
-  io.A_sel := MuxLookup(instruction, ASelValue.ZERO, Seq(
-    Instruction.ADDI -> ASelValue.REG,
-    Instruction.SW -> ASelValue.REG,
-    Instruction.JAL -> ASelValue.PC,
-    Instruction.JALR -> ASelValue.REG,
-    Instruction.LUI -> ASelValue.ZERO,
-  ))
-  io.B_sel := MuxLookup(instruction, BSelValue.REG, Seq(
-    Instruction.ADDI -> BSelValue.IMM,
-    Instruction.SW -> BSelValue.IMM,
-    Instruction.JAL -> BSelValue.IMM,
-    Instruction.JALR -> BSelValue.IMM,
-    Instruction.LUI -> BSelValue.IMM,
-  ))
-  io.WB_sel := MuxLookup(instruction, WBSelValue.ALU, Seq(
-    Instruction.ADDI -> WBSelValue.ALU,
-    Instruction.SW -> WBSelValue.NOT_APPLY,
-    Instruction.JAL -> WBSelValue.PC4,
-    Instruction.JALR -> WBSelValue.PC4,
-    Instruction.LUI -> WBSelValue.ALU,
+  val invalid_signal = List(PCSelV.KEEP, ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 255.U, LdValue.INV, StValue.INV)
+  val map = Array(
+
+    ADDI  -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
+
+    LW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.DMEM , 0.U, LdValue.LW,  StValue.INV),
+
+    SW    -> List(PCSelV.INC4,      ASelV.REG,  BSelV.IMM, ImmType.S, WBSelV.NO_WB, 0.U, LdValue.INV, StValue.SW),
+
+    JAL   -> List(PCSelV.OVERWRITE, ASelV.PC,   BSelV.IMM, ImmType.J, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV),
+    JALR  -> List(PCSelV.OVERWRITE, ASelV.REG,  BSelV.IMM, ImmType.I, WBSelV.PC4  , 0.U, LdValue.INV, StValue.INV),
+    LUI   -> List(PCSelV.INC4,      ASelV.ZERO, BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
+    AUIPC -> List(PCSelV.INC4,      ASelV.PC,   BSelV.IMM, ImmType.U, WBSelV.ALU  , 0.U, LdValue.INV, StValue.INV),
+
+    EBREAK-> List(PCSelV.KEEP,      ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 1.U, LdValue.INV, StValue.INV),
+  )
+  val signals = ListLookup(io.inst, invalid_signal, map)
+  io.PC_sel := Mux(state=/=STATE_WRITE_BACK, PCSelV.KEEP, signals(0))
+  io.A_sel := signals(1)
+  io.B_sel := signals(2)
+  io.WB_sel := signals(4)
+  imm_type := signals(3)
+  io.ebreak_en := state===STATE_EXECUTE && signals(5)=/=0.U
+  io.ebreak_code := signals(5)
+  io.dmem_read_en := state===STATE_WRITE_BACK && signals(6)=/=LdValue.INV
+  io.dmem_read_type := signals(6)
+  io.dmem_write_en := state===STATE_WRITE_BACK && signals(7)=/=StValue.INV
+  io.dmem_write_mask := MuxLookup(signals(7), 0.U, Seq(
+    StValue.SB -> "b1".U,
+    StValue.SH -> "b11".U,
+    StValue.SW -> "b1111".U,
   ))
 }

@@ -30,6 +30,7 @@
 #include "watchpoint.h"
 #include "../isa/isa.h"
 #include "../utils/disasm.h"
+#include "../difftest/difftest-def.h"
 
 static int is_batch_mode = false;
 
@@ -61,7 +62,7 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
-  npc_status=NPC_STATUS_QUIT;
+  //npc_status=NPC_STATUS_QUIT;
   return -1;
 }
 
@@ -459,4 +460,33 @@ void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
 void assert_fail_msg() {
   isa_reg_display();
   //statistic();
+}
+
+int last_pc = 0;
+int ftrace_inst;
+int ftrace_rd;
+int ftrace_pc;
+#ifdef CONFIG_DIFFTEST
+int difftest_inst;
+int difftest_pc;
+#endif
+void trace_exec(uint32_t pc, uint32_t instr) {
+  if (ftrace_inst != 0 && pc != ftrace_pc) {
+    ftrace_exec(ftrace_pc, pc, ftrace_rd,
+                (ftrace_inst & 0x7f) == 0x6f);
+    ftrace_inst = 0;
+  }
+#ifdef CONFIG_DIFFTEST
+  if (difftest_pc != 0 && difftest_pc != pc) {
+    difftest_step(difftest_pc, pc);
+  }
+  difftest_pc = pc;
+#endif
+  instruction_ring_buffer_push(instr, pc);
+  // Is jal/jalr
+  if ((instr & 0x7f) == 0x6f || (instr & 0x7f) == 0x67) {
+    ftrace_inst = instr;
+    ftrace_rd = (instr >> 7) & 0x1f;
+    ftrace_pc = pc;
+  }
 }

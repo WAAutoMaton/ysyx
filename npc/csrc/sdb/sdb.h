@@ -39,5 +39,6 @@ void instruction_ring_buffer_push(word_t code, word_t pc);
 void ftrace_init(const char *elf_file);
 void ftrace_close();
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
+void trace_exec(uint32_t pc, uint32_t instr);
 
 #endif

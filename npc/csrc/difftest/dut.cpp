@@ -127,7 +127,7 @@ void difftest_step(vaddr_t pc, vaddr_t npc) {
   ref_difftest_regcpy(&ref_r, DIFFTEST_TO_DUT);
 
   checkregs(&ref_r, pc, npc);
-  Log("Difftest Passs");
+  //Log("Difftest Passs");
 }
 #else
 void init_difftest(char *ref_so_file, long img_size, int port) { }

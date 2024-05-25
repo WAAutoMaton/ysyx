@@ -22,3 +22,6 @@ image: $(IMAGE).elf
 
 run: image
 	$(MAKE) -C $(NPC_HOME) run IMG=$(IMAGE).bin ELF=$(IMAGE).elf DIFFTEST_REF=$(NEMU_HOME)/build/riscv32-nemu-interpreter-so
+
+gdb: image
+	$(MAKE) -C $(NPC_HOME) gdb IMG=$(IMAGE).bin ELF=$(IMAGE).elf DIFFTEST_REF=$(NEMU_HOME)/build/riscv32-nemu-interpreter-so

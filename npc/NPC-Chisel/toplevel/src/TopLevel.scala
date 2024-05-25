@@ -5,50 +5,71 @@ import chisel3.util.MuxLookup
 class TopLevel() extends Module {
   val DATA_WIDTH: Width = 32.W
   val io = IO(new Bundle {
-    val mem_read_address = Output(UInt(DATA_WIDTH))
-    val mem_read_value = Input(UInt(DATA_WIDTH))
-    val mem_read_en = Output(Bool())
+    val test_pc = Output(UInt(DATA_WIDTH))
     val test_regs = Output(Vec(32, UInt(DATA_WIDTH)))
+    val test_imem_en = Output(Bool())
   })
   val PC = RegInit(UInt(32.W), 0x80000000L.U)
-  io.mem_read_address := PC
+  io.test_pc := PC
 
   val controller = Module(new Controller())
-  io.mem_read_en := controller.io.imem_en
 
+  val imem = Module(new PMem())
+  val dmem = Module(new PMem())
   val register_file = Module(new RegisterFile())
   val alu = Module(new ALU())
   val inst = RegInit(UInt(32.W), 0.U)
   val ebreak_inst = Module(new EBreak())
   val imm_gen = Module(new ImmediateGenerator)
-  ebreak_inst.io.enable := inst === 0x00100073L.U
+  ebreak_inst.io.enable := controller.io.ebreak_en
+  ebreak_inst.io.code   := controller.io.ebreak_code
 
   PC := MuxLookup(controller.io.PC_sel, PC, Seq(
-    PCSelValue.KEEP -> PC,
-    PCSelValue.INC4 -> (PC + 4.U),
-    PCSelValue.OVERWRITE -> alu.io.result,
+    PCSelV.KEEP -> PC,
+    PCSelV.INC4 -> (PC + 4.U),
+    PCSelV.OVERWRITE -> alu.io.result,
   ))
-  inst := Mux(io.mem_read_en, io.mem_read_value, inst)
+  inst := Mux(controller.io.imem_en, imem.io.rdata, inst)
   controller.io.inst := inst
   alu.io.src1 := MuxLookup(controller.io.A_sel, 0.U, Seq(
-    ASelValue.REG -> register_file.io.reg1_data,
-    ASelValue.PC -> PC,
+    ASelV.REG -> register_file.io.reg1_data,
+    ASelV.PC -> PC,
   ))
   alu.io.src2 := MuxLookup(controller.io.B_sel, 0.U, Seq(
-    BSelValue.REG -> 0.U,
-    BSelValue.IMM -> imm_gen.io.imm,
+    BSelV.REG -> 0.U,
+    BSelV.IMM -> imm_gen.io.imm,
   ))
   register_file.io.write_data := MuxLookup(controller.io.WB_sel, 0.U, Seq(
-    WBSelValue.ALU -> alu.io.result,
-    WBSelValue.PC4 -> (PC+4.U),
+    WBSelV.ALU -> alu.io.result,
+    WBSelV.PC4 -> (PC+4.U),
+    WBSelV.DMEM -> dmem.io.rdata,
   ))
   register_file.io.write_address := inst(11, 7)
   register_file.io.write_enable := controller.io.reg_write_en
   register_file.io.reg1_addr := inst(19, 15)
   register_file.io.reg1_read_enable := controller.io.reg_read_en
+  register_file.io.reg2_addr := inst(24, 20)
+  register_file.io.reg2_read_enable := controller.io.reg_read_en
   imm_gen.io.inst := inst
   imm_gen.io.imm_type := controller.io.imm_type
   io.test_regs := register_file.io.test_reg_out
+
+  imem.io.valid := controller.io.imem_en
+  imem.io.raddr := PC
+  imem.io.waddr:=0.U
+  imem.io.wdata:=0.U
+  imem.io.wmask:=0.U
+  imem.io.wen := false.B
+  io.test_imem_en := controller.io.imem_en
+
+  val dmem_write_data = RegInit(UInt(32.W), 0.U)
+  dmem_write_data := register_file.io.reg2_data
+  dmem.io.valid := controller.io.dmem_read_en || controller.io.dmem_write_en
+  dmem.io.raddr := alu.io.result
+  dmem.io.wen := controller.io.dmem_write_en
+  dmem.io.waddr := alu.io.result
+  dmem.io.wdata := dmem_write_data
+  dmem.io.wmask := controller.io.dmem_write_mask
 }
 
 // The Main object extending App to generate the Verilog code.

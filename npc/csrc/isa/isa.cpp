@@ -14,6 +14,7 @@ uint32_t *reg_ref[32];
 uint8_t mem[MEM_SIZE];
 const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 const std::unique_ptr<VTopLevel> top{new VTopLevel{contextp.get(), "TOP"}};
+unsigned char *imem_en_ref = nullptr;
 
 void init_isa()
 {
@@ -76,21 +77,41 @@ word_t paddr_read(paddr_t addr, int len)
         puts("Invalid memory access");
         return 0;
     }
+    word_t result = 0;
     switch (len) {
         case 1:
-            return *guest_to_host(addr);
+            result= *guest_to_host(addr);
+            break;
         case 2:
-            return *(uint16_t *)guest_to_host(addr);
+            result= *(uint16_t *)guest_to_host(addr);
+            break;
         case 4:
-            return *(uint32_t *)guest_to_host(addr);
+            result= *(uint32_t *)guest_to_host(addr);
+            break;
         default:
             puts("Invalid memory access");
-            return 0;
     }
+#ifdef CONFIG_MTRACE
+  log_write("paddr_read: addr = " FMT_PADDR ", len = %d, data = " FMT_WORD "\n", addr, len, result);
+#endif
+  return result;
 }
 word_t vaddr_read(paddr_t addr, int len)
 {
     return paddr_read(addr, len);
+}
+
+void paddr_write(paddr_t addr, int len, word_t data)
+{
+#ifdef CONFIG_MTRACE
+  log_write("paddr_write: addr = " FMT_PADDR ", len = %d, data = " FMT_WORD "\n", addr, len, data);
+#endif
+  *guest_to_host(addr) = data & 0xff;
+  if (len>=2) *guest_to_host(addr+1) = (data/0x100)&0xff;
+  if (len==4) {
+    *guest_to_host(addr+2) = (data/0x10000)&0xff;
+    *guest_to_host(addr+3) = (data/0x1000000);
+  }
 }
 
 uint8_t* guest_to_host(paddr_t paddr) { return mem + paddr - CONFIG_MBASE; }
@@ -102,7 +123,7 @@ CPU_state get_current_cpu_state()
     for(int i = 0; i < 32; i++) {
         cpu.gpr[i] = *reg_ref[i];
     }
-    cpu.pc = top->io_mem_read_address;
+    cpu.pc = top->io_test_pc;
     return cpu;
 }
 
