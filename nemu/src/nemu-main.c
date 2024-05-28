@@ -69,7 +69,9 @@ int main(int argc, char *argv[]) {
   instruction_ring_buffer_write();
   }
 #endif
+#ifdef CONFIG_FTRACE
   ftrace_close();
+#endif
   
   return is_exit_status_bad();
 }

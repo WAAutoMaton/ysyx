@@ -72,12 +72,16 @@ extern int symbol_func_num;
 
 extern char* elf_file_content;
 
+#ifdef CONFIG_ITRACE
 void instruction_ring_buffer_init();
 void instruction_ring_buffer_write();
+#endif
 
+#ifdef CONFIG_FTRACE
 void ftrace_init(const char *elf_file);
 void ftrace_close();
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
+#endif
 
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
   do { \

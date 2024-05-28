@@ -45,6 +45,7 @@ char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
 int instruction_ring_buffer_head, instruction_ring_buffer_tail;
 SymbolFunc *symbol_funcs;
 int symbol_func_num;
+#ifdef CONFIG_ITRACE
 void instruction_ring_buffer_init() {
   instruction_ring_buffer_head = 0;
   instruction_ring_buffer_tail = 0;
@@ -54,7 +55,9 @@ void instruction_ring_buffer_write() {
     log_write("%s\n", instruction_ring_buffer[i]);
   }
 }
+#endif
 
+#ifdef CONFIG_FTRACE
 void ftrace_init(const char* elf_file) {
   if (elf_file == NULL) {
     Log("No ELF file is given. ftrace is disabled.");
@@ -172,6 +175,7 @@ void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
     }
   }
 }
+#endif
 
 void device_update();
 
