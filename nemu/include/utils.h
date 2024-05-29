@@ -83,6 +83,9 @@ void ftrace_close();
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
 #endif
 
+#ifdef CONFIG_DTRACE
+#endif
+
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
   do { \
     extern FILE* log_fp; \
