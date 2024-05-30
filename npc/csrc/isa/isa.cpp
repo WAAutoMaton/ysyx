@@ -74,7 +74,10 @@ word_t isa_reg_str2val(const char *s, bool *success) {
 word_t paddr_read(paddr_t addr, int len)
 {
     if (addr < CONFIG_MBASE || addr >= CONFIG_MBASE + MEM_SIZE) {
-        puts("Invalid memory access");
+        //puts("Invalid memory access");
+#ifdef CONFIG_MTRACE
+  log_write("paddr_read: addr = " FMT_PADDR ", len = %d, data = INVALID\n", addr, len);
+#endif
         return 0;
     }
     word_t result = 0;
@@ -89,7 +92,10 @@ word_t paddr_read(paddr_t addr, int len)
             result= *(uint32_t *)guest_to_host(addr);
             break;
         default:
-            puts("Invalid memory access");
+#ifdef CONFIG_MTRACE
+            log_write("paddr_read: addr = " FMT_PADDR ", len = %d, data = INVALID\n", addr, len);
+#endif
+            return 0;
     }
 #ifdef CONFIG_MTRACE
   log_write("paddr_read: addr = " FMT_PADDR ", len = %d, data = " FMT_WORD "\n", addr, len, result);
@@ -106,6 +112,10 @@ void paddr_write(paddr_t addr, int len, word_t data)
 #ifdef CONFIG_MTRACE
   log_write("paddr_write: addr = " FMT_PADDR ", len = %d, data = " FMT_WORD "\n", addr, len, data);
 #endif
+    if (addr < CONFIG_MBASE || addr >= CONFIG_MBASE + MEM_SIZE) {
+        //puts("Invalid memory access");
+        return;
+    }
   *guest_to_host(addr) = data & 0xff;
   if (len>=2) *guest_to_host(addr+1) = (data/0x100)&0xff;
   if (len==4) {

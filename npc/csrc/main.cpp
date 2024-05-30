@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
   is_ebreak = false;
   contextp->debug(0);
   contextp->randReset(2);
-  contextp->traceEverOn(true);
+  //contextp->traceEverOn(true);
   contextp->commandArgs(argc, argv);
   imem_en_ref = &top->io_test_imem_en;
   top->reset = 1;
@@ -74,13 +74,18 @@ int main(int argc, char **argv) {
   init_difftest(difftest_ref_so_file, img_size, 0);
 #endif
 
+  get_time();
   sdb_mainloop();
 
+#ifdef CONFIG_ITRACE
   instruction_ring_buffer_write();
+#endif
+#ifdef CONFIG_FTRACE
   ftrace_close();
+#endif
 
   top->final();
-  contextp->coveragep()->write("logs/coverage.dat");
+  //contextp->coveragep()->write("logs/coverage.dat");
   if (npc_status != NPC_STATUS_QUIT) {
     puts("Program exited abnormally.");
     log_close();

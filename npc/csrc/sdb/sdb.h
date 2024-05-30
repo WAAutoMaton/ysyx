@@ -32,13 +32,23 @@ void init_sdb(const char* elf_file);
 void sdb_mainloop();
 void cpu_exec(int);
 
+#ifdef CONFIG_ITRACE
 void instruction_ring_buffer_init();
 void instruction_ring_buffer_write();
 void instruction_ring_buffer_push(word_t code, word_t pc);
+#endif
 
+#ifdef CONFIG_FTRACE
 void ftrace_init(const char *elf_file);
 void ftrace_close();
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
+#endif
+#ifdef CONFIG_TRACE
 void trace_exec(uint32_t pc, uint32_t instr);
+#endif
+#ifdef CONFIG_DTRACE
+void dtrace_read(const char* name, uint32_t addr, uint32_t data);
+void dtrace_write(const char* name, uint32_t addr, uint32_t data);
+#endif
 
 #endif

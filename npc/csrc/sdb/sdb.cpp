@@ -298,11 +298,15 @@ void init_sdb(const char* elf_file) {
   /* Initialize the watchpoint pool. */
   init_wp_pool();
 
+#ifdef CONFIG_ITRACE
   instruction_ring_buffer_init();
+#endif
 
   init_disasm("riscv32");
 
+#ifdef CONFIG_FTRACE
   ftrace_init(elf_file);
+#endif
 }
 
 char instruction_ring_buffer[INSTRUCTION_LOG_BUF_SIZE][128];
@@ -415,7 +419,7 @@ void ftrace_close() {
 
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
   if (pc_before==0x8000023c) {
-    Log("pc_before = %x, pc_after = %x, rd = %d, is_jal = %d", pc_before, pc_after, rd, is_jal);
+    log_write("pc_before = %x, pc_after = %x, rd = %d, is_jal = %d", pc_before, pc_after, rd, is_jal);
   }
   static int stack_depth = 0;
   if (symbol_func_num==0) return;
@@ -440,19 +444,19 @@ void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal) {
   }
   if (func_before==func_after) {
     if (rd==1) {
-      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      log_write("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
       stack_depth++;
     } else if (rd==0 && !is_jal) {
       if (stack_depth>0) stack_depth--;
-      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+      log_write("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
     }
   } else {
     if (is_call) {
-      _Log("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
+      log_write("%x: %*sFunc Call: %s to %s\n", pc_before, stack_depth,"",symbol_funcs[func_before].name, symbol_funcs[func_after].name);
       stack_depth++;
     } else {
       if (stack_depth>0) stack_depth--;
-      _Log("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
+      log_write("%x: %*sFunc Ret: %s to [%s@%x]\n", pc_before, stack_depth, "", symbol_funcs[func_before].name, symbol_funcs[func_after].name, pc_after);
     }
   }
 }
@@ -462,14 +466,17 @@ void assert_fail_msg() {
   //statistic();
 }
 
+#ifdef CONFIG_FTRACE
 int last_pc = 0;
 int ftrace_inst;
 int ftrace_rd;
 int ftrace_pc;
+#endif
 #ifdef CONFIG_DIFFTEST
 int difftest_inst;
 int difftest_pc;
 #endif
+#ifdef CONFIG_TRACE
 void trace_exec(uint32_t pc, uint32_t instr) {
   if (ftrace_inst != 0 && pc != ftrace_pc) {
     ftrace_exec(ftrace_pc, pc, ftrace_rd,
@@ -490,3 +497,14 @@ void trace_exec(uint32_t pc, uint32_t instr) {
     ftrace_pc = pc;
   }
 }
+#endif
+#ifdef CONFIG_DTRACE
+void dtrace_read(const char* name, uint32_t addr, uint32_t data)
+{
+  log_write("DTrace: read %s at " FMT_WORD ": " FMT_WORD "\n", name, addr, data);
+}
+void dtrace_write(const char* name, uint32_t addr, uint32_t data)
+{
+  log_write("DTrace: write %s at " FMT_WORD ": " FMT_WORD "\n", name, addr, data);
+}
+#endif
