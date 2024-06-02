@@ -10,6 +10,8 @@ object Constant  {
   val BSelLen: Width = 2.W
   val WBSelLen: Width = 3.W
   val ImmTypeLen: Width = 3.W
+  val LdValueLen: Width = 3.W
+  val StValueLen: Width = 3.W
 }
 object ImmType extends Enumeration {
   val INVALID_TYPE: UInt = 0.U

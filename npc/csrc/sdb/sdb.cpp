@@ -478,11 +478,13 @@ int difftest_pc;
 #endif
 #ifdef CONFIG_TRACE
 void trace_exec(uint32_t pc, uint32_t instr) {
+#ifdef CONFIG_FTRACE
   if (ftrace_inst != 0 && pc != ftrace_pc) {
     ftrace_exec(ftrace_pc, pc, ftrace_rd,
                 (ftrace_inst & 0x7f) == 0x6f);
     ftrace_inst = 0;
   }
+#endif
 #ifdef CONFIG_DIFFTEST
   if (difftest_pc != 0 && difftest_pc != pc) {
     difftest_step(difftest_pc, pc);
@@ -490,12 +492,14 @@ void trace_exec(uint32_t pc, uint32_t instr) {
   difftest_pc = pc;
 #endif
   instruction_ring_buffer_push(instr, pc);
+#ifdef CONFIG_FTRACE
   // Is jal/jalr
   if ((instr & 0x7f) == 0x6f || (instr & 0x7f) == 0x67) {
     ftrace_inst = instr;
     ftrace_rd = (instr >> 7) & 0x1f;
     ftrace_pc = pc;
   }
+#endif
 }
 #endif
 #ifdef CONFIG_DTRACE

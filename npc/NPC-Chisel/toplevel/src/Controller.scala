@@ -25,9 +25,9 @@ class Controller extends Module{
     val ebreak_en = Output(UInt(8.W))
     val ebreak_code = Output(UInt(8.W))
     val dmem_read_en = Output(Bool())
-    val dmem_read_type = Output(UInt(4.W))
+    val dmem_read_type = Output(UInt(Constant.LdValueLen))
     val dmem_write_en = Output(Bool())
-    val dmem_write_mask = Output(UInt(8.W))
+    val dmem_write_type = Output(UInt(Constant.StValueLen))
   })
   import Instruction._
   val state = RegInit(UInt(4.W), STATE_IDLE)
@@ -101,10 +101,6 @@ class Controller extends Module{
   io.dmem_read_en := state===STATE_WRITE_BACK && signals(6)=/=LdValue.INV
   io.dmem_read_type := signals(6)
   io.dmem_write_en := state===STATE_WRITE_BACK && signals(7)=/=StValue.INV
-  io.dmem_write_mask := MuxLookup(signals(7), 0.U, Seq(
-    StValue.SB -> "b1".U,
-    StValue.SH -> "b11".U,
-    StValue.SW -> "b1111".U,
-  ))
+  io.dmem_write_type := signals(7)
   io.ALU_sel := signals(8)
 }

@@ -107,21 +107,20 @@ word_t vaddr_read(paddr_t addr, int len)
     return paddr_read(addr, len);
 }
 
-void paddr_write(paddr_t addr, int len, word_t data)
+void paddr_write(paddr_t addr, int wmask, word_t data)
 {
 #ifdef CONFIG_MTRACE
-  log_write("paddr_write: addr = " FMT_PADDR ", len = %d, data = " FMT_WORD "\n", addr, len, data);
+  log_write("paddr_write: addr = " FMT_PADDR ", wmask = %x, data = " FMT_WORD "\n", addr, wmask, data);
 #endif
     if (addr < CONFIG_MBASE || addr >= CONFIG_MBASE + MEM_SIZE) {
         //puts("Invalid memory access");
         return;
     }
-  *guest_to_host(addr) = data & 0xff;
-  if (len>=2) *guest_to_host(addr+1) = (data/0x100)&0xff;
-  if (len==4) {
-    *guest_to_host(addr+2) = (data/0x10000)&0xff;
-    *guest_to_host(addr+3) = (data/0x1000000);
-  }
+    for(int i = 0; i < 4; i++) {
+        if(wmask & (1 << i)) {
+            *guest_to_host(addr + i) = (data >> (i * 8)) & 0xff;
+        }
+    }
 }
 
 uint8_t* guest_to_host(paddr_t paddr) { return mem + paddr - CONFIG_MBASE; }

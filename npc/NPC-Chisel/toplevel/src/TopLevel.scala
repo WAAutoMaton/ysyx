@@ -39,14 +39,18 @@ class TopLevel() extends Module {
     BSelV.IMM -> imm_gen.io.imm,
   ))
   alu.io.sel := controller.io.ALU_sel
+  // 内存访问需要4字节对齐，非4字节对齐的 lb/lh 指令需要对结果进行偏移
+  val roffset = (alu.io.result(1,0)<<3.U)
+  val shift_rdata = Wire(UInt(Constant.BitWidth))
+  shift_rdata := dmem.io.rdata >> roffset
   register_file.io.write_data := MuxLookup(controller.io.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu.io.result,
     WBSelV.PC4 -> (PC+4.U),
     WBSelV.LW -> dmem.io.rdata,
-    WBSelV.LBU -> dmem.io.rdata(7, 0),
-    WBSelV.LHU -> dmem.io.rdata(15, 0),
-    WBSelV.LB -> dmem.io.rdata(7, 0).asSInt.pad(32).asUInt,
-    WBSelV.LH -> dmem.io.rdata(15, 0).asSInt.pad(32).asUInt,
+    WBSelV.LBU -> shift_rdata(7, 0),
+    WBSelV.LHU -> shift_rdata(15, 0),
+    WBSelV.LB -> shift_rdata(7, 0).asSInt.pad(32).asUInt,
+    WBSelV.LH -> shift_rdata(15, 0).asSInt.pad(32).asUInt,
   ))
   register_file.io.write_address := inst(11, 7)
   register_file.io.write_enable := controller.io.reg_write_en
@@ -67,13 +71,19 @@ class TopLevel() extends Module {
   io.test_imem_en := controller.io.imem_en
 
   val dmem_write_data = RegInit(UInt(Constant.BitWidth), 0.U)
-  dmem_write_data := register_file.io.reg2_data
+  // 内存访问需要4字节对齐，非4字节对齐的 sb/sw 指令需要对数据进行偏移
+  val woffset = alu.io.result(1,0)<<3.U
+  dmem_write_data := register_file.io.reg2_data << woffset
   dmem.io.valid := controller.io.dmem_read_en || controller.io.dmem_write_en
-  dmem.io.raddr := alu.io.result
+  dmem.io.raddr := alu.io.result >> 2.U << 2.U
   dmem.io.wen := controller.io.dmem_write_en
-  dmem.io.waddr := alu.io.result
+  dmem.io.waddr := alu.io.result >> 2.U << 2.U
   dmem.io.wdata := dmem_write_data
-  dmem.io.wmask := controller.io.dmem_write_mask
+  dmem.io.wmask := MuxLookup(controller.io.dmem_write_type, "b0000".U, Seq(
+    StValue.SW -> "b1111".U,
+    StValue.SH -> ("b11".U << alu.io.result(1,0)),
+    StValue.SB -> ("b1".U << alu.io.result(1,0)),
+  ))
 }
 
 // The Main object extending App to generate the Verilog code.

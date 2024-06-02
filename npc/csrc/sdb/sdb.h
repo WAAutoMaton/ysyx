@@ -29,6 +29,7 @@ typedef struct
 
 word_t expr(char *e, bool *success);
 void init_sdb(const char* elf_file);
+void sdb_set_batch_mode();
 void sdb_mainloop();
 void cpu_exec(int);
 

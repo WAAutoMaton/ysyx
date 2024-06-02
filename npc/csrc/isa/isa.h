@@ -26,7 +26,7 @@ void init_isa();
 word_t isa_reg_str2val(const char *s, bool *success);
 word_t paddr_read(paddr_t addr, int len);
 word_t vaddr_read(paddr_t addr, int len);
-void paddr_write(paddr_t addr, int len,word_t data);
+void paddr_write(paddr_t addr, int wmask,word_t data);
 uint8_t* guest_to_host(paddr_t paddr);
 paddr_t host_to_guest(uint8_t *haddr);
 CPU_state get_current_cpu_state();

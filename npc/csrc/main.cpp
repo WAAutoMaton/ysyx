@@ -41,12 +41,18 @@ void cpu_exec(int n) {
 
 int main(int argc, char **argv) {
   if (argc < 5) {
-    puts("Format: <x.exe> +trace <executable image> <elf file> <difftest ref "
+    puts("Format: <x.exe> batch-on/batch-off <executable image> <elf file> <difftest ref "
          "so file>");
     return 1;
   }
   Verilated::mkdir("logs");
   log_init();
+  if (strcmp(argv[1], "batch-on") == 0) {
+    Log("Batch mode on");
+    sdb_set_batch_mode();
+  } else {
+    Log("Batch mode off");
+  }
   FILE *f = fopen(argv[2], "rb");
   if (f == nullptr) {
     puts("Open executable image failed");
