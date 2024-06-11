@@ -1,3 +1,6 @@
 [submodule "rt-thread-am"]
 	path = rt-thread-am
 	url = https://github.com/WAAutoMaton/ysyx-rt-thread
+[submodule "am-kernels"]
+	path = am-kernels
+	url = https://github.com/WAAutoMaton/ysyx-am-kernels
