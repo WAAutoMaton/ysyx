@@ -1,0 +1,3 @@
+[submodule "rt-thread-am"]
+	path = rt-thread-am
+	url = ./rt-thread-am
