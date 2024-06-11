@@ -83,7 +83,8 @@ void ftrace_close();
 void ftrace_exec(uint32_t pc_before, uint32_t pc_after, int rd, bool is_jal);
 #endif
 
-#ifdef CONFIG_DTRACE
+#ifdef CONFIG_ETRACE
+void etrace_exec(uint32_t pc);
 #endif
 
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \

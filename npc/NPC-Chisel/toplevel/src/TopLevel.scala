@@ -4,7 +4,8 @@ import chisel3.util.MuxLookup
 class TopLevel() extends Module {
   val io = IO(new Bundle {
     val test_pc = Output(UInt(Constant.BitWidth))
-    val test_regs = Output(Vec(32, UInt(Constant.BitWidth)))
+    val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
+    val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
     val test_imem_en = Output(Bool())
   })
   val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
@@ -27,6 +28,8 @@ class TopLevel() extends Module {
     PCSelV.INC4 -> (PC + 4.U),
     PCSelV.OVERWRITE -> alu.io.result,
     PCSelV.BRANCH -> Mux(alu.io.result(0), (PC + imm_gen.io.imm), (PC + 4.U)),
+    PCSelV.ECALL  -> register_file.io.csr_ecall_ret,
+    PCSelV.MRET   -> register_file.io.csr_mret_ret,
   ))
   inst := Mux(controller.io.imem_en, imem.io.rdata, inst)
   controller.io.inst := inst
@@ -51,6 +54,7 @@ class TopLevel() extends Module {
     WBSelV.LHU -> shift_rdata(15, 0),
     WBSelV.LB -> shift_rdata(7, 0).asSInt.pad(32).asUInt,
     WBSelV.LH -> shift_rdata(15, 0).asSInt.pad(32).asUInt,
+    WBSelV.CSR -> register_file.io.csr_rdata,
   ))
   register_file.io.write_address := inst(11, 7)
   register_file.io.write_enable := controller.io.reg_write_en
@@ -58,9 +62,17 @@ class TopLevel() extends Module {
   register_file.io.reg1_read_enable := controller.io.reg_read_en
   register_file.io.reg2_addr := inst(24, 20)
   register_file.io.reg2_read_enable := controller.io.reg_read_en
+  register_file.io.csr_ecall_enable := controller.io.PC_sel === PCSelV.ECALL
+  register_file.io.csr_mret_enable := controller.io.PC_sel === PCSelV.MRET
+  register_file.io.csr_rw_enable := controller.io.csr_sel === CsrVal.RW && (controller.io.state === ControllerState.STATE_EXECUTE || controller.io.state === ControllerState.STATE_WRITE_BACK)
+  register_file.io.csr_rs_enable := controller.io.csr_sel === CsrVal.RS && (controller.io.state === ControllerState.STATE_EXECUTE || controller.io.state === ControllerState.STATE_WRITE_BACK)
+  register_file.io.csr_addr := imm_gen.io.imm
+  register_file.io.csr_wdata := register_file.io.reg1_data
+  register_file.io.pc := PC
   imm_gen.io.inst := inst
   imm_gen.io.imm_type := controller.io.imm_type
   io.test_regs := register_file.io.test_reg_out
+  io.test_csr := register_file.io.test_csr_out
 
   imem.io.valid := controller.io.imem_en
   imem.io.raddr := PC

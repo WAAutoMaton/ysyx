@@ -161,6 +161,11 @@ config DTRACE
   bool "Enable device tracer"
   default n
 
+config ETRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable ecall tracer"
+  default n
+
 config ITRACE_COND
   depends on ITRACE
   string "Only trace instructions when the condition is true"

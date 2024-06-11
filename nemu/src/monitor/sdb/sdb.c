@@ -299,4 +299,5 @@ void init_sdb(const char* elf_file) {
 #ifdef CONFIG_FTRACE
   ftrace_init(elf_file);
 #endif
+
 }

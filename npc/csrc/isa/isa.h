@@ -6,7 +6,7 @@
 #include "../config.h"
 
 
-constexpr int MEM_SIZE=1024*1024*4;
+constexpr int MEM_SIZE=1024*1024*128;
 extern uint8_t mem[MEM_SIZE];
 
 extern const std::unique_ptr<VerilatedContext> contextp;
@@ -16,6 +16,10 @@ extern unsigned char* imem_en_ref;
 extern "C" struct riscv32_CPU_state{
   word_t gpr[32];
   vaddr_t pc;
+  word_t mepc;
+  word_t mstatus;
+  word_t mcause;
+  word_t mtvec;
 };
 
 using CPU_state = riscv32_CPU_state;

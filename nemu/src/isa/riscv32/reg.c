@@ -15,6 +15,7 @@
 
 #include <isa.h>
 #include "local-include/reg.h"
+#include "debug.h"
 
 const char *regs[] = {
   "$0", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
@@ -39,4 +40,14 @@ word_t isa_reg_str2val(const char *s, bool *success) {
   }
   *success = false;
   return 0;
+}
+
+word_t* csr_decode(word_t imm) {
+  switch (imm) {
+    case 0x300: return &cpu.csr.mstatus;
+    case 0x341: return &cpu.csr.mepc;
+    case 0x342: return &cpu.csr.mcause;
+    case 0x305: return &cpu.csr.mtvec;
+    default: panic("Unsupported CSR: 0x%x", imm);
+  }
 }

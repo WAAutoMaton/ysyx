@@ -133,6 +133,10 @@ CPU_state get_current_cpu_state()
         cpu.gpr[i] = *reg_ref[i];
     }
     cpu.pc = top->io_test_pc;
+    cpu.mstatus = top->io_test_csr_0;
+    cpu.mepc = top->io_test_csr_1;
+    cpu.mcause = top->io_test_csr_2;
+    cpu.mtvec = top->io_test_csr_3;
     return cpu;
 }
 
@@ -152,6 +156,30 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc, vaddr_t npc) {
              i, pc, ref_r->gpr[i], cpu.gpr[i]);
       result = false;
     }
+  }
+  if (ref_r->mstatus != cpu.mstatus) {
+    printf("mstatus is different at pc = " FMT_WORD " ref: " FMT_WORD
+           ",  NPC: " FMT_WORD "\n",
+           pc, ref_r->mstatus, cpu.mstatus);
+    result = false;
+  }
+  if (ref_r->mepc != cpu.mepc) {
+    printf("mepc is different at pc = " FMT_WORD " ref: " FMT_WORD
+           ",  NPC: " FMT_WORD "\n",
+           pc, ref_r->mepc, cpu.mepc);
+    result = false;
+  }
+  if (ref_r->mcause != cpu.mcause) {
+    printf("mcause is different at pc = " FMT_WORD " ref: " FMT_WORD
+           ",  NPC: " FMT_WORD "\n",
+           pc, ref_r->mcause, cpu.mcause);
+    result = false;
+  }
+  if (ref_r->mtvec != cpu.mtvec) {
+    printf("mtvec is different at pc = " FMT_WORD " ref: " FMT_WORD
+           ",  NPC: " FMT_WORD "\n",
+           pc, ref_r->mtvec, cpu.mtvec);
+    result = false;
   }
   return result;
 }

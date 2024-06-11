@@ -53,8 +53,9 @@ extern "C" {
 			dtrace_write("serial", waddr, wdata);
 			#endif
 			putchar(wdata);
-			mmio=true;
 			fflush(stdout);
+			mmio=true;
+			//fflush(stdout);
 			//return;
 		}
 		if (mmio) {

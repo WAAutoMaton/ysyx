@@ -304,3 +304,10 @@ void cpu_exec(uint64_t n) {
     case NEMU_QUIT: statistic();
   }
 }
+
+#ifdef CONFIG_ETRACE
+void etrace_exec(uint32_t pc)
+{
+  log_write("etrace: ecall at " FMT_WORD "\n", pc);
+}
+#endif

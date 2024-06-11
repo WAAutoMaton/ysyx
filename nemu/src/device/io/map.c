@@ -59,14 +59,14 @@ word_t map_read(paddr_t addr, int len, IOMap *map) {
   invoke_callback(map->callback, offset, len, false); // prepare data to read
   word_t ret = host_read(map->space + offset, len);
 #ifdef CONFIG_DTRACE
-  _Log("dtrace: read device %s at " FMT_PADDR " with len %d, value = " FMT_WORD "\n", map->name, addr, len, ret);
+  log_write("dtrace: read device %s at " FMT_PADDR " with len %d, value = " FMT_WORD "\n", map->name, addr, len, ret);
 #endif
   return ret;
 }
 
 void map_write(paddr_t addr, int len, word_t data, IOMap *map) {
 #ifdef CONFIG_DTRACE
-  _Log("dtrace: write device %s at " FMT_PADDR " with len %d, value = " FMT_WORD "\n", map->name, addr, len, data);
+  log_write("dtrace: write device %s at " FMT_PADDR " with len %d, value = " FMT_WORD "\n", map->name, addr, len, data);
 #endif
   assert(len >= 1 && len <= 8);
   check_bound(map, addr);

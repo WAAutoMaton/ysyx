@@ -5,13 +5,16 @@ object Constant  {
   val BitWidth: Width = 32.W
   val InstLen: Width = 32.W
   val ALUSelLen: Width = 6.W
-  val PCSelLen: Width = 2.W
+  val PCSelLen: Width = 3.W
   val ASelLen: Width = 2.W
   val BSelLen: Width = 2.W
-  val WBSelLen: Width = 3.W
+  val WBSelLen: Width = 4.W
   val ImmTypeLen: Width = 3.W
   val LdValueLen: Width = 3.W
   val StValueLen: Width = 3.W
+  val CsrValLen: Width = 2.W
+  val RegisterNum = 32
+  val CSRNum = 4
 }
 object ImmType extends Enumeration {
   val INVALID_TYPE: UInt = 0.U
@@ -28,6 +31,8 @@ object PCSelV extends Enumeration {
   val INC4: UInt = 1.U
   val OVERWRITE: UInt = 2.U
   val BRANCH:    UInt = 3.U
+  val ECALL: UInt = 4.U
+  val MRET: UInt = 5.U
 }
 
 object ASelV extends Enumeration {
@@ -50,6 +55,7 @@ object WBSelV extends Enumeration {
   val LHU: UInt = 5.U
   val LB: UInt = 6.U
   val LH: UInt = 7.U
+  val CSR: UInt = 8.U
 }
 
 object ALUSelV extends Enumeration {
@@ -86,4 +92,10 @@ object StValue extends Enumeration {
   val SB: UInt = 1.U
   val SH: UInt = 2.U
   val SW: UInt = 3.U
+}
+
+object CsrVal extends Enumeration {
+  val INV: UInt = 0.U
+  val RW: UInt = 1.U
+  val RS: UInt = 2.U
 }
