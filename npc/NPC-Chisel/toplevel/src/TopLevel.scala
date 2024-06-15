@@ -1,23 +1,28 @@
 import chisel3._
-import chisel3.util.MuxLookup
 
 class TopLevel() extends Module {
   val io = IO(new Bundle {
     val test_pc = Output(UInt(Constant.BitWidth))
-    val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
-    val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
+    //val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
+    //val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
     val test_imem_en = Output(Bool())
   })
   val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
   io.test_pc := PC
 
-  val controller = Module(new Controller())
+  val ifu = Module(new IFU())
+  val idu = Module(new IDU())
 
-  val imem = Module(new PMem())
-  val dmem = Module(new PMem())
+  ifu.io.out <> idu.io.in
+  idu.io.out.ready := false.B
+  ifu.io.in.valid := false.B
+  ifu.io.in.bits.pc := PC
+
+  io.test_imem_en := ifu.io.test_imem_en
+
+  /*val dmem = Module(new PMem())
   val register_file = Module(new RegisterFile())
   val alu = Module(new ALU())
-  val inst = RegInit(UInt(Constant.InstLen), 0.U)
   val ebreak_inst = Module(new EBreak())
   val imm_gen = Module(new ImmediateGenerator)
   ebreak_inst.io.enable := controller.io.ebreak_en
@@ -31,8 +36,6 @@ class TopLevel() extends Module {
     PCSelV.ECALL  -> register_file.io.csr_ecall_ret,
     PCSelV.MRET   -> register_file.io.csr_mret_ret,
   ))
-  inst := Mux(controller.io.imem_en, imem.io.rdata, inst)
-  controller.io.inst := inst
   alu.io.src1 := MuxLookup(controller.io.A_sel, 0.U, Seq(
     ASelV.REG -> register_file.io.reg1_data,
     ASelV.PC -> PC,
@@ -74,13 +77,7 @@ class TopLevel() extends Module {
   io.test_regs := register_file.io.test_reg_out
   io.test_csr := register_file.io.test_csr_out
 
-  imem.io.valid := controller.io.imem_en
-  imem.io.raddr := PC
-  imem.io.waddr:=0.U
-  imem.io.wdata:=0.U
-  imem.io.wmask:=0.U
-  imem.io.wen := false.B
-  io.test_imem_en := controller.io.imem_en
+  io.test_imem_en := ifu.io.test_imem_en
 
   val dmem_write_data = RegInit(UInt(Constant.BitWidth), 0.U)
   // 内存访问需要4字节对齐，非4字节对齐的 sb/sw 指令需要对数据进行偏移
@@ -95,7 +92,7 @@ class TopLevel() extends Module {
     StValue.SW -> "b1111".U,
     StValue.SH -> ("b11".U << alu.io.result(1,0)),
     StValue.SB -> ("b1".U << alu.io.result(1,0)),
-  ))
+  ))*/
 }
 
 // The Main object extending App to generate the Verilog code.
