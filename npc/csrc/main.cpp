@@ -41,29 +41,29 @@ void cpu_exec(int n) {
 
 int main(int argc, char **argv) {
   if (argc < 5) {
-    puts("Format: <x.exe> batch-on/batch-off <executable image> <elf file> <difftest ref "
+    puts("Format: <x.exe> +trace batch-on/batch-off <executable image> <elf file> <difftest ref "
          "so file>");
     return 1;
   }
   Verilated::mkdir("logs");
   log_init();
-  if (strcmp(argv[1], "batch-on") == 0) {
+  if (strcmp(argv[2], "batch-on") == 0) {
     Log("Batch mode on");
     sdb_set_batch_mode();
   } else {
     Log("Batch mode off");
   }
-  FILE *f = fopen(argv[2], "rb");
+  FILE *f = fopen(argv[3], "rb");
   if (f == nullptr) {
     puts("Open executable image failed");
   }
-  const char *elf = argv[3];
-  const char *difftest_ref_so_file = argv[4];
+  const char *elf = argv[4];
+  const char *difftest_ref_so_file = argv[5];
   int img_size = fread(mem, 1, MEM_SIZE, f);
   is_ebreak = false;
   contextp->debug(0);
   contextp->randReset(2);
-  //contextp->traceEverOn(true);
+  contextp->traceEverOn(true);
   contextp->commandArgs(argc, argv);
   imem_en_ref = &top->io_test_imem_en;
   top->reset = 1;
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 #endif
 
   top->final();
-  //contextp->coveragep()->write("logs/coverage.dat");
+  contextp->coveragep()->write("logs/coverage.dat");
   if (npc_status != NPC_STATUS_QUIT) {
     puts("Program exited abnormally.");
     log_close();

@@ -4,17 +4,15 @@ import chisel3.util.MuxLookup
 
 
 class RegisterFile extends Module {
-  val REG_ADDR_LEN: Width = 5.W
+  private val REG_ADDR_LEN: Width = Constant.RegAddrLen
 
   val io = IO(new Bundle{
     val write_address = Input(UInt(REG_ADDR_LEN))
     val write_data = Input(UInt(Constant.BitWidth))
     val write_enable = Input(Bool())
     val reg1_addr = Input(UInt(REG_ADDR_LEN))
-    val reg1_read_enable = Input(Bool())
     val reg1_data = Output(UInt(Constant.BitWidth))
     val reg2_addr = Input(UInt(REG_ADDR_LEN))
-    val reg2_read_enable = Input(Bool())
     val reg2_data = Output(UInt(Constant.BitWidth))
     val test_reg_out = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
     val csr_rw_enable = Input(Bool())
@@ -58,8 +56,8 @@ class RegisterFile extends Module {
   when(io.csr_mret_enable) {
     csr(0) := 0x80.U
   }
-  io.reg1_data := Mux(io.reg1_read_enable, registers(io.reg1_addr), 0.U)
-  io.reg2_data := Mux(io.reg2_read_enable, registers(io.reg2_addr), 0.U)
+  io.reg1_data := registers(io.reg1_addr)
+  io.reg2_data := registers(io.reg2_addr)
   io.test_reg_out := registers
   io.test_csr_out := csr
 }

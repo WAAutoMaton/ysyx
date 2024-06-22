@@ -55,6 +55,7 @@ void init_isa()
 void isa_reg_display()
 {
     puts("Registers:");
+    printf(" PC: 0x%08x\n", top->io_test_pc);
     for(int i = 0; i < 32; i++) {
         printf("%3s: 0x%08x %12d\n", regs[i], *reg_ref[i], (int)*reg_ref[i]);
     }

@@ -2,7 +2,7 @@
 all:
 
 run: sim
-	./obj_dir/VTopLevel $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
+	./obj_dir/VTopLevel +trace $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
 gdb: sim
 	gdb --args ./obj_dir/VTopLevel $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
 

@@ -20,6 +20,8 @@ class ControlSignal extends Bundle {
 class IDU_Output extends Bundle{
   val control_signal = new ControlSignal
   val imm = UInt(Constant.BitWidth)
+  val pc = UInt(Constant.BitWidth)
+  val inst = UInt(Constant.BitWidth)
 }
 
 class IDU extends Module{
@@ -37,6 +39,8 @@ class IDU extends Module{
   val imm_gen = Module(new ImmediateGenerator)
   val inst = RegInit(UInt(Constant.InstLen), 0.U)
   inst := Mux(io.in.ready && io.in.valid, io.in.bits.inst, inst)
+  val pc = RegInit(UInt(Constant.BitWidth), 0.U)
+  pc := Mux(io.in.ready && io.in.valid, io.in.bits.pc, pc)
 
   val invalid_signal = List(PCSelV.KEEP, ASelV.ZERO, BSelV.IMM, ImmType.INVALID_TYPE, WBSelV.NO_WB, 255.U, LdValue.INV, StValue.INV, ALUSelV.ZERO, CsrVal.INV)
   val map = Array(
@@ -108,9 +112,11 @@ class IDU extends Module{
   imm_gen.io.inst := inst
   imm_gen.io.imm_type := imm_type
 
-  io.out.bits.imm := imm_gen.io.imm
-  io.out.bits.control_signal := csig
   io.out.valid := state === state_wait_ready
   io.in.ready := state === state_idle
+  io.out.bits.imm := imm_gen.io.imm
+  io.out.bits.control_signal := csig
+  io.out.bits.pc := pc
+  io.out.bits.inst := inst
 
 }
