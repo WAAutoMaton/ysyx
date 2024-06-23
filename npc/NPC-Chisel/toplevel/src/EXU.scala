@@ -89,7 +89,9 @@ class EXU extends Module{
   io.out.bits.control_signal := csig
   io.out.bits.alu_result := alu.io.result
   io.out.bits.csr_pc_result := Mux(csig.PC_sel === PCSelV.ECALL, register_file.io.csr_ecall_ret, register_file.io.csr_mret_ret)
-  io.out.bits.csr_rdata := register_file.io.csr_rdata
+  val csr_rdata = RegInit(UInt(Constant.BitWidth), 0.U)
+  csr_rdata := Mux(state===state_execute, register_file.io.csr_rdata,csr_rdata)
+  io.out.bits.csr_rdata := csr_rdata
   io.out.bits.reg2_data := register_file.io.reg2_data
   io.out.bits.inst := inst
   io.out.bits.imm := imm

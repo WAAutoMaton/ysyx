@@ -42,7 +42,7 @@ class WBU extends Module{
   ))
 
   // 内存访问需要4字节对齐，非4字节对齐的 lb/lh 指令需要对结果进行偏移
-  val roffset = (alu_result<<3.U)
+  val roffset = (alu_result(1,0)<<3.U)
   val shift_rdata = Wire(UInt(Constant.BitWidth))
   shift_rdata := dmem.io.rdata >> roffset
   io.wb_addr := input.inst(11, 7)

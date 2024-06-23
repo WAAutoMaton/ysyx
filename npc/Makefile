@@ -4,7 +4,7 @@ all:
 run: sim
 	./obj_dir/VTopLevel +trace $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
 gdb: sim
-	gdb --args ./obj_dir/VTopLevel $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
+	gdb --args ./obj_dir/VTopLevel -trace $(BATCH_MODE) $(IMG) $(ELF) $(DIFFTEST_REF)
 
 sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
