@@ -10,15 +10,16 @@ class WBU extends Module{
     val wb_en = Output(Bool())
   })
 
-  private val state_idle :: state_execute :: state_wait_ready :: Nil = Enum(3)
+  private val state_idle :: state_execute :: state_mem_read :: state_wait_ready :: Nil = Enum(4)
   val state = RegInit(state_idle)
   state := MuxLookup(state, state_idle, List(
     state_idle -> Mux(io.in.valid, state_execute, state_idle),
-    state_execute -> state_wait_ready,
+    state_execute -> state_mem_read,
+    state_mem_read -> state_wait_ready,
     state_wait_ready -> Mux(io.out.ready, state_idle, state_wait_ready)
   ))
 
-  val dmem = Module(new PMem())
+  val dmem = Module(new SRAM())
 
   val imm = RegInit(UInt(Constant.BitWidth), 0.U)
   imm := Mux(io.in.valid && io.in.ready, io.in.bits.imm, imm)
@@ -46,11 +47,11 @@ class WBU extends Module{
   val shift_rdata = Wire(UInt(Constant.BitWidth))
   shift_rdata := dmem.io.rdata >> roffset
   io.wb_addr := input.inst(11, 7)
-  io.wb_en := state===state_execute && csig.WB_sel=/=WBSelV.NO_WB
+  io.wb_en := state===state_mem_read && csig.WB_sel=/=WBSelV.NO_WB
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu_result,
     WBSelV.PC4 -> (pc+4.U),
-    WBSelV.LW -> dmem.io.rdata,
+    WBSelV.LW -> shift_rdata,
     WBSelV.LBU -> shift_rdata(7, 0),
     WBSelV.LHU -> shift_rdata(15, 0),
     WBSelV.LB -> shift_rdata(7, 0).asSInt.pad(32).asUInt,
