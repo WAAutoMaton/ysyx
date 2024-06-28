@@ -4,3 +4,6 @@
 [submodule "am-kernels"]
 	path = am-kernels
 	url = https://github.com/WAAutoMaton/ysyx-am-kernels
+[submodule "fceux-am"]
+	path = fceux-am
+	url = https://github.com/WAAutoMaton/ysyx-fceux-am
