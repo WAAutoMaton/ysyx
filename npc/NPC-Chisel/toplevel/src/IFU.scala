@@ -16,31 +16,31 @@ class IFU extends Module{
     val out = Decoupled(new IFU_Output)
     val test_imem_en = Output(Bool())
     val test_pc = Output(UInt(Constant.BitWidth))
+    val imem = Flipped(new AxiLiteIO())
   })
-  val imem = Module(new SRAM())
   private val state_idle :: state_read :: state_read_wait :: state_wait_ready :: Nil = Enum(4)
   val state = RegInit(state_idle)
   state := MuxLookup(state, state_idle, List(
     state_idle -> Mux(io.in.valid, state_read, state_idle),
-    state_read -> Mux(imem.io.arready, state_read_wait, state_read),
-    state_read_wait -> Mux(imem.io.rvalid, state_wait_ready, state_read_wait),
+    state_read -> Mux(io.imem.arready, state_read_wait, state_read),
+    state_read_wait -> Mux(io.imem.rvalid, state_wait_ready, state_read_wait),
     state_wait_ready -> Mux(io.out.ready, state_idle, state_wait_ready)
   ))
   val pc = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
   val inst = RegInit(UInt(Constant.InstLen), 0.U)
-  imem.io.araddr := pc
-  imem.io.arvalid := state === state_read
-  imem.io.rready := true.B
+  io.imem.araddr := pc
+  io.imem.arvalid := state === state_read
+  io.imem.rready := true.B
 
   pc := Mux(io.in.valid && io.in.ready, io.in.bits.pc, pc)
-  inst := Mux(imem.io.rvalid && imem.io.rready, imem.io.rdata, inst)
+  inst := Mux(io.imem.rvalid && io.imem.rready, io.imem.rdata, inst)
 
-  imem.io.wvalid := false.B
-  imem.io.awvalid := false.B
-  imem.io.awaddr := 0.U
-  imem.io.wdata := 0.U
-  imem.io.wstrb := 0.U
-  imem.io.bready := false.B
+  io.imem.wvalid := false.B
+  io.imem.awvalid := false.B
+  io.imem.awaddr := 0.U
+  io.imem.wdata := 0.U
+  io.imem.wstrb := 0.U
+  io.imem.bready := false.B
 
   io.in.ready := state === state_idle
   io.out.valid := state === state_wait_ready

@@ -2,29 +2,7 @@ import chisel3._
 import chisel3.util._
 
 class SRAM extends Module{
-  val io = IO(new Bundle{
-    val araddr = Input(UInt(Constant.BitWidth))
-    val arvalid = Input(Bool())
-    val arready = Output(Bool())
-
-    val rdata = Output(UInt(Constant.BitWidth))
-    val rresp = Output(UInt(2.W))
-    val rvalid = Output(Bool())
-    val rready = Input(Bool())
-
-    val awaddr = Input(UInt(Constant.BitWidth))
-    val awvalid = Input(Bool())
-    val awready = Output(Bool())
-
-    val wdata = Input(UInt(Constant.BitWidth))
-    val wstrb = Input(UInt(4.W))
-    val wvalid = Input(Bool())
-    val wready = Output(Bool())
-
-    val bresp = Output(UInt(2.W))
-    val bvalid = Output(Bool())
-    val bready = Input(Bool())
-  })
+  val io = IO(new AxiLiteIO())
 
   val pmem = Module(new PMem())
   val read_delay_cnt = RegInit(UInt(32.W), 0.U)
@@ -40,7 +18,7 @@ class SRAM extends Module{
   state_r := MuxLookup(state_r, state_r_idle, List(
     state_r_idle -> Mux(io.arvalid, state_r_read, state_r_idle),
     state_r_read -> state_r_read_delay,
-    state_r_read_delay -> Mux(read_delay_cnt >= read_delay, state_r_wait_ready, state_r_read_delay),
+    state_r_read_delay -> Mux(read_delay_cnt >= /*read_delay*/ 1.U, state_r_wait_ready, state_r_read_delay),
     state_r_wait_ready -> Mux(io.rready, state_r_idle, state_r_wait_ready)
   ))
 
@@ -64,7 +42,7 @@ class SRAM extends Module{
     state_w_wait_data -> Mux(io.wvalid, state_w_write, state_w_wait_data),
     state_w_wait_addr -> Mux(io.awvalid, state_w_write, state_w_wait_addr),
     state_w_write -> state_w_write_delay,
-    state_w_write_delay -> Mux(write_delay_cnt>= write_delay, state_w_wait_ready, state_w_write_delay),
+    state_w_write_delay -> Mux(write_delay_cnt>= /*write_delay*/ 1.U, state_w_wait_ready, state_w_write_delay),
     state_w_wait_ready -> Mux(io.bready, state_w_idle, state_w_wait_ready),
   ))
 

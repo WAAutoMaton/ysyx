@@ -8,9 +8,8 @@ class WBU extends Module{
     val wb_data = Output(UInt(Constant.BitWidth))
     val wb_addr = Output(UInt(Constant.RegAddrLen))
     val wb_en = Output(Bool())
+    val dmem = Flipped(new AxiLiteIO())
   })
-
-  val dmem = Module(new SRAM())
 
   private val state_idle :: state_execute :: state_mem_read :: state_mem_write :: state_read_wait :: state_write_wait :: state_wait_ready :: Nil = Enum(7)
   val state = RegInit(state_idle)
@@ -20,10 +19,10 @@ class WBU extends Module{
         Mux(io.in.bits.control_signal.dmem_write_en, state_mem_write, state_execute),
     ), state_idle),
     state_execute -> state_wait_ready,
-    state_mem_read -> Mux(dmem.io.arready, state_read_wait, state_mem_read),
-    state_mem_write -> Mux(dmem.io.awready && dmem.io.wready, state_write_wait, state_mem_write),
-    state_read_wait -> Mux(dmem.io.rvalid, state_wait_ready, state_read_wait),
-    state_write_wait -> Mux(dmem.io.bvalid, state_wait_ready, state_write_wait),
+    state_mem_read -> Mux(io.dmem.arready, state_read_wait, state_mem_read),
+    state_mem_write -> Mux(io.dmem.awready && io.dmem.wready, state_write_wait, state_mem_write),
+    state_read_wait -> Mux(io.dmem.rvalid, state_wait_ready, state_read_wait),
+    state_write_wait -> Mux(io.dmem.bvalid, state_wait_ready, state_write_wait),
     state_wait_ready -> Mux(io.out.ready, state_idle, state_wait_ready)
   ))
 
@@ -52,9 +51,9 @@ class WBU extends Module{
   // 内存访问需要4字节对齐，非4字节对齐的 lb/lh 指令需要对结果进行偏移
   val roffset = (alu_result(1,0)<<3.U)
   val shift_rdata = Wire(UInt(Constant.BitWidth))
-  shift_rdata := dmem.io.rdata >> roffset
+  shift_rdata := io.dmem.rdata >> roffset
   io.wb_addr := input.inst(11, 7)
-  io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && dmem.io.rvalid && dmem.io.rready)
+  io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && io.dmem.rvalid && io.dmem.rready)
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu_result,
     WBSelV.PC4 -> (pc+4.U),
@@ -66,24 +65,24 @@ class WBU extends Module{
     WBSelV.CSR -> csr_rdata,
   ))
 
-  dmem.io.araddr := alu_result >> 2.U << 2.U
-  dmem.io.arvalid := state === state_mem_read
-  dmem.io.rready := true.B
+  io.dmem.araddr := alu_result >> 2.U << 2.U
+  io.dmem.arvalid := state === state_mem_read
+  io.dmem.rready := true.B
 
   val dmem_write_data = Wire(UInt(Constant.BitWidth))
   // 内存访问需要4字节对齐，非4字节对齐的 sb/sw 指令需要对数据进行偏移
   val woffset = alu_result(1,0)<<3.U
   dmem_write_data := input.reg2_data << woffset
-  dmem.io.wvalid := state === state_mem_write
-  dmem.io.awvalid := state === state_mem_write
-  dmem.io.awaddr := alu_result >> 2.U << 2.U
-  dmem.io.wdata := dmem_write_data
-  dmem.io.wstrb := MuxLookup(csig.dmem_write_type, "b0000".U, Seq(
+  io.dmem.wvalid := state === state_mem_write
+  io.dmem.awvalid := state === state_mem_write
+  io.dmem.awaddr := alu_result >> 2.U << 2.U
+  io.dmem.wdata := dmem_write_data
+  io.dmem.wstrb := MuxLookup(csig.dmem_write_type, "b0000".U, Seq(
     StValue.SW -> "b1111".U,
     StValue.SH -> ("b11".U << alu_result(1,0)),
     StValue.SB -> ("b1".U << alu_result(1,0)),
   ))
-  dmem.io.bready := state === state_write_wait
+  io.dmem.bready := state === state_write_wait
 
   io.out.valid := state === state_wait_ready
   io.in.ready := state === state_idle

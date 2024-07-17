@@ -12,7 +12,7 @@ sim:
 	csrc/main.cpp csrc/dpi.cpp csrc/sdb/sdb.cpp csrc/sdb/watchpoint.cpp csrc/sdb/expr.cpp \
 	csrc/isa/isa.cpp csrc/common.cpp csrc/utils/disasm.cpp \
 	csrc/difftest/dut.cpp \
-	/usr/lib/libreadline.so /usr/lib/libLLVM-17.so \
+	/usr/lib/libreadline.so /usr/lib/libLLVM-18.so \
 	vsrc/TopLevel.v vsrc/EBreak.v vsrc/PMem.v
 clean:
 	rm -rf obj_dir logs

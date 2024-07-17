@@ -151,6 +151,121 @@ end // initial
 `endif
 `endif // SYNTHESIS
 endmodule
+module AxiXbar(
+  input         clock,
+  input         reset,
+  input  [31:0] io_in_araddr,
+  input         io_in_arvalid,
+  output        io_in_arready,
+  output [31:0] io_in_rdata,
+  output        io_in_rvalid,
+  input         io_in_rready,
+  input  [31:0] io_in_awaddr,
+  input         io_in_awvalid,
+  output        io_in_awready,
+  input  [31:0] io_in_wdata,
+  input  [3:0]  io_in_wstrb,
+  input         io_in_wvalid,
+  output        io_in_wready,
+  output        io_in_bvalid,
+  input         io_in_bready,
+  output [31:0] io_out_0_araddr,
+  output        io_out_0_arvalid,
+  input         io_out_0_arready,
+  input  [31:0] io_out_0_rdata,
+  input         io_out_0_rvalid,
+  output        io_out_0_rready,
+  output [31:0] io_out_0_awaddr,
+  output        io_out_0_awvalid,
+  input         io_out_0_awready,
+  output [31:0] io_out_0_wdata,
+  output [3:0]  io_out_0_wstrb,
+  output        io_out_0_wvalid,
+  input         io_out_0_wready,
+  input         io_out_0_bvalid,
+  output        io_out_0_bready
+);
+`ifdef RANDOMIZE_REG_INIT
+  reg [31:0] _RAND_0;
+  reg [31:0] _RAND_1;
+`endif // RANDOMIZE_REG_INIT
+  reg  state_r; // @[AxiXbar.scala 41:24]
+  wire  _state_r_T_1 = io_in_rready & io_out_0_arvalid & state_r; // @[AxiXbar.scala 45:38]
+  wire  _state_r_T_6 = io_in_arvalid ? 1'h0 : 1'h1; // @[AxiXbar.scala 46:35]
+  wire  _state_r_T_8 = state_r ? _state_r_T_6 : _state_r_T_1; // @[Mux.scala 81:58]
+  wire  _io_out_0_arvalid_T = ~state_r; // @[AxiXbar.scala 55:34]
+  reg  state_w; // @[AxiXbar.scala 63:24]
+  wire  _state_w_T = io_in_bready & io_out_0_bvalid; // @[AxiXbar.scala 67:50]
+  wire  _state_w_T_6 = io_in_awvalid ? 1'h0 : 1'h1; // @[AxiXbar.scala 68:33]
+  wire  _state_w_T_8 = state_w ? _state_w_T_6 : _state_w_T; // @[Mux.scala 81:58]
+  wire  _io_out_0_awvalid_T = ~state_w; // @[AxiXbar.scala 77:34]
+  assign io_in_arready = state_r ? 1'h0 : io_out_0_arready; // @[AxiXbar.scala 58:23]
+  assign io_in_rdata = state_r ? 32'h0 : io_out_0_rdata; // @[AxiXbar.scala 59:21]
+  assign io_in_rvalid = state_r ? 1'h0 : io_out_0_rvalid; // @[AxiXbar.scala 61:22]
+  assign io_in_awready = state_w ? 1'h0 : io_out_0_awready; // @[AxiXbar.scala 83:23]
+  assign io_in_wready = state_w ? 1'h0 : io_out_0_wready; // @[AxiXbar.scala 84:22]
+  assign io_in_bvalid = state_w ? 1'h0 : io_out_0_bvalid; // @[AxiXbar.scala 86:22]
+  assign io_out_0_araddr = io_in_araddr; // @[AxiXbar.scala 54:22]
+  assign io_out_0_arvalid = ~state_r & io_in_arvalid; // @[AxiXbar.scala 55:59]
+  assign io_out_0_rready = _io_out_0_arvalid_T & io_in_rready; // @[AxiXbar.scala 56:58]
+  assign io_out_0_awaddr = io_in_awaddr; // @[AxiXbar.scala 76:22]
+  assign io_out_0_awvalid = ~state_w & io_in_awvalid; // @[AxiXbar.scala 77:59]
+  assign io_out_0_wdata = io_in_wdata; // @[AxiXbar.scala 78:21]
+  assign io_out_0_wstrb = io_in_wstrb; // @[AxiXbar.scala 79:21]
+  assign io_out_0_wvalid = _io_out_0_awvalid_T & io_in_wvalid; // @[AxiXbar.scala 80:58]
+  assign io_out_0_bready = _io_out_0_awvalid_T & io_in_bready; // @[AxiXbar.scala 81:58]
+  always @(posedge clock) begin
+    state_r <= reset | _state_r_T_8; // @[AxiXbar.scala 41:{24,24} 43:11]
+    state_w <= reset | _state_w_T_8; // @[AxiXbar.scala 63:{24,24} 65:11]
+  end
+// Register and memory initialization
+`ifdef RANDOMIZE_GARBAGE_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_INVALID_ASSIGN
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_REG_INIT
+`define RANDOMIZE
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+`define RANDOMIZE
+`endif
+`ifndef RANDOM
+`define RANDOM $random
+`endif
+`ifdef RANDOMIZE_MEM_INIT
+  integer initvar;
+`endif
+`ifndef SYNTHESIS
+`ifdef FIRRTL_BEFORE_INITIAL
+`FIRRTL_BEFORE_INITIAL
+`endif
+initial begin
+  `ifdef RANDOMIZE
+    `ifdef INIT_RANDOM
+      `INIT_RANDOM
+    `endif
+    `ifndef VERILATOR
+      `ifdef RANDOMIZE_DELAY
+        #`RANDOMIZE_DELAY begin end
+      `else
+        #0.002 begin end
+      `endif
+    `endif
+`ifdef RANDOMIZE_REG_INIT
+  _RAND_0 = {1{`RANDOM}};
+  state_r = _RAND_0[0:0];
+  _RAND_1 = {1{`RANDOM}};
+  state_w = _RAND_1[0:0];
+`endif // RANDOMIZE_REG_INIT
+  `endif // RANDOMIZE
+end // initial
+`ifdef FIRRTL_AFTER_INITIAL
+`FIRRTL_AFTER_INITIAL
+`endif
+`endif // SYNTHESIS
+endmodule
 module SRAM(
   input         clock,
   input         reset,
@@ -2524,171 +2639,203 @@ module TopLevel(
   wire  sram_arbiter_io_out_wready; // @[TopLevel.scala 12:28]
   wire  sram_arbiter_io_out_bvalid; // @[TopLevel.scala 12:28]
   wire  sram_arbiter_io_out_bready; // @[TopLevel.scala 12:28]
-  wire  sram_clock; // @[TopLevel.scala 13:20]
-  wire  sram_reset; // @[TopLevel.scala 13:20]
-  wire [31:0] sram_io_araddr; // @[TopLevel.scala 13:20]
-  wire  sram_io_arvalid; // @[TopLevel.scala 13:20]
-  wire  sram_io_arready; // @[TopLevel.scala 13:20]
-  wire [31:0] sram_io_rdata; // @[TopLevel.scala 13:20]
-  wire  sram_io_rvalid; // @[TopLevel.scala 13:20]
-  wire  sram_io_rready; // @[TopLevel.scala 13:20]
-  wire [31:0] sram_io_awaddr; // @[TopLevel.scala 13:20]
-  wire  sram_io_awvalid; // @[TopLevel.scala 13:20]
-  wire  sram_io_awready; // @[TopLevel.scala 13:20]
-  wire [31:0] sram_io_wdata; // @[TopLevel.scala 13:20]
-  wire [3:0] sram_io_wstrb; // @[TopLevel.scala 13:20]
-  wire  sram_io_wvalid; // @[TopLevel.scala 13:20]
-  wire  sram_io_wready; // @[TopLevel.scala 13:20]
-  wire  sram_io_bvalid; // @[TopLevel.scala 13:20]
-  wire  sram_io_bready; // @[TopLevel.scala 13:20]
-  wire  ifu_clock; // @[TopLevel.scala 14:19]
-  wire  ifu_reset; // @[TopLevel.scala 14:19]
-  wire  ifu_io_in_ready; // @[TopLevel.scala 14:19]
-  wire  ifu_io_in_valid; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_in_bits_pc; // @[TopLevel.scala 14:19]
-  wire  ifu_io_out_ready; // @[TopLevel.scala 14:19]
-  wire  ifu_io_out_valid; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_out_bits_inst; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_out_bits_pc; // @[TopLevel.scala 14:19]
-  wire  ifu_io_test_imem_en; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_test_pc; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_imem_araddr; // @[TopLevel.scala 14:19]
-  wire  ifu_io_imem_arvalid; // @[TopLevel.scala 14:19]
-  wire  ifu_io_imem_arready; // @[TopLevel.scala 14:19]
-  wire [31:0] ifu_io_imem_rdata; // @[TopLevel.scala 14:19]
-  wire  ifu_io_imem_rvalid; // @[TopLevel.scala 14:19]
-  wire  ifu_io_imem_rready; // @[TopLevel.scala 14:19]
-  wire  idu_clock; // @[TopLevel.scala 15:19]
-  wire  idu_reset; // @[TopLevel.scala 15:19]
-  wire  idu_io_in_ready; // @[TopLevel.scala 15:19]
-  wire  idu_io_in_valid; // @[TopLevel.scala 15:19]
-  wire [31:0] idu_io_in_bits_inst; // @[TopLevel.scala 15:19]
-  wire [31:0] idu_io_in_bits_pc; // @[TopLevel.scala 15:19]
-  wire  idu_io_out_ready; // @[TopLevel.scala 15:19]
-  wire  idu_io_out_valid; // @[TopLevel.scala 15:19]
-  wire [2:0] idu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 15:19]
-  wire [1:0] idu_io_out_bits_control_signal_A_sel; // @[TopLevel.scala 15:19]
-  wire [1:0] idu_io_out_bits_control_signal_B_sel; // @[TopLevel.scala 15:19]
-  wire [3:0] idu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 15:19]
-  wire [5:0] idu_io_out_bits_control_signal_ALU_sel; // @[TopLevel.scala 15:19]
-  wire [1:0] idu_io_out_bits_control_signal_csr_sel; // @[TopLevel.scala 15:19]
-  wire [7:0] idu_io_out_bits_control_signal_ebreak_en; // @[TopLevel.scala 15:19]
-  wire [7:0] idu_io_out_bits_control_signal_ebreak_code; // @[TopLevel.scala 15:19]
-  wire  idu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 15:19]
-  wire  idu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 15:19]
-  wire [2:0] idu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 15:19]
-  wire [31:0] idu_io_out_bits_imm; // @[TopLevel.scala 15:19]
-  wire [31:0] idu_io_out_bits_pc; // @[TopLevel.scala 15:19]
-  wire [31:0] idu_io_out_bits_inst; // @[TopLevel.scala 15:19]
-  wire  exu_clock; // @[TopLevel.scala 16:19]
-  wire  exu_reset; // @[TopLevel.scala 16:19]
-  wire  exu_io_in_ready; // @[TopLevel.scala 16:19]
-  wire  exu_io_in_valid; // @[TopLevel.scala 16:19]
-  wire [2:0] exu_io_in_bits_control_signal_PC_sel; // @[TopLevel.scala 16:19]
-  wire [1:0] exu_io_in_bits_control_signal_A_sel; // @[TopLevel.scala 16:19]
-  wire [1:0] exu_io_in_bits_control_signal_B_sel; // @[TopLevel.scala 16:19]
-  wire [3:0] exu_io_in_bits_control_signal_WB_sel; // @[TopLevel.scala 16:19]
-  wire [5:0] exu_io_in_bits_control_signal_ALU_sel; // @[TopLevel.scala 16:19]
-  wire [1:0] exu_io_in_bits_control_signal_csr_sel; // @[TopLevel.scala 16:19]
-  wire [7:0] exu_io_in_bits_control_signal_ebreak_en; // @[TopLevel.scala 16:19]
-  wire [7:0] exu_io_in_bits_control_signal_ebreak_code; // @[TopLevel.scala 16:19]
-  wire  exu_io_in_bits_control_signal_dmem_read_en; // @[TopLevel.scala 16:19]
-  wire  exu_io_in_bits_control_signal_dmem_write_en; // @[TopLevel.scala 16:19]
-  wire [2:0] exu_io_in_bits_control_signal_dmem_write_type; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_in_bits_imm; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_in_bits_pc; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_in_bits_inst; // @[TopLevel.scala 16:19]
-  wire  exu_io_out_ready; // @[TopLevel.scala 16:19]
-  wire  exu_io_out_valid; // @[TopLevel.scala 16:19]
-  wire [2:0] exu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 16:19]
-  wire [3:0] exu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 16:19]
-  wire  exu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 16:19]
-  wire  exu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 16:19]
-  wire [2:0] exu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_imm; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_pc; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_inst; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_alu_result; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_csr_pc_result; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_csr_rdata; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_out_bits_reg2_data; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_0; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_1; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_2; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_3; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_4; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_5; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_6; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_7; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_8; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_9; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_10; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_11; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_12; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_13; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_14; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_15; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_16; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_17; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_18; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_19; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_20; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_21; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_22; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_23; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_24; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_25; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_26; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_27; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_28; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_29; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_30; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_regs_31; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_csr_0; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_csr_1; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_csr_2; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_test_csr_3; // @[TopLevel.scala 16:19]
-  wire  exu_io_wb_en; // @[TopLevel.scala 16:19]
-  wire [31:0] exu_io_wb_data; // @[TopLevel.scala 16:19]
-  wire [4:0] exu_io_wb_addr; // @[TopLevel.scala 16:19]
-  wire  wbu_clock; // @[TopLevel.scala 17:19]
-  wire  wbu_reset; // @[TopLevel.scala 17:19]
-  wire  wbu_io_in_ready; // @[TopLevel.scala 17:19]
-  wire  wbu_io_in_valid; // @[TopLevel.scala 17:19]
-  wire [2:0] wbu_io_in_bits_control_signal_PC_sel; // @[TopLevel.scala 17:19]
-  wire [3:0] wbu_io_in_bits_control_signal_WB_sel; // @[TopLevel.scala 17:19]
-  wire  wbu_io_in_bits_control_signal_dmem_read_en; // @[TopLevel.scala 17:19]
-  wire  wbu_io_in_bits_control_signal_dmem_write_en; // @[TopLevel.scala 17:19]
-  wire [2:0] wbu_io_in_bits_control_signal_dmem_write_type; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_imm; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_pc; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_inst; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_alu_result; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_csr_pc_result; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_csr_rdata; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_in_bits_reg2_data; // @[TopLevel.scala 17:19]
-  wire  wbu_io_out_ready; // @[TopLevel.scala 17:19]
-  wire  wbu_io_out_valid; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_out_bits_pc; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_wb_data; // @[TopLevel.scala 17:19]
-  wire [4:0] wbu_io_wb_addr; // @[TopLevel.scala 17:19]
-  wire  wbu_io_wb_en; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_dmem_araddr; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_arvalid; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_arready; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_dmem_rdata; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_rvalid; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_rready; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_dmem_awaddr; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_awvalid; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_awready; // @[TopLevel.scala 17:19]
-  wire [31:0] wbu_io_dmem_wdata; // @[TopLevel.scala 17:19]
-  wire [3:0] wbu_io_dmem_wstrb; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_wvalid; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_wready; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_bvalid; // @[TopLevel.scala 17:19]
-  wire  wbu_io_dmem_bready; // @[TopLevel.scala 17:19]
-  reg  start_tick; // @[TopLevel.scala 19:27]
+  wire  axi_xbar_clock; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_reset; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_in_araddr; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_arvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_arready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_in_rdata; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_rvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_rready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_in_awaddr; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_awvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_awready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_in_wdata; // @[TopLevel.scala 13:24]
+  wire [3:0] axi_xbar_io_in_wstrb; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_wvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_wready; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_bvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_in_bready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_out_0_araddr; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_arvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_arready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_out_0_rdata; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_rvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_rready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_out_0_awaddr; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_awvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_awready; // @[TopLevel.scala 13:24]
+  wire [31:0] axi_xbar_io_out_0_wdata; // @[TopLevel.scala 13:24]
+  wire [3:0] axi_xbar_io_out_0_wstrb; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_wvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_wready; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_bvalid; // @[TopLevel.scala 13:24]
+  wire  axi_xbar_io_out_0_bready; // @[TopLevel.scala 13:24]
+  wire  sram_clock; // @[TopLevel.scala 14:20]
+  wire  sram_reset; // @[TopLevel.scala 14:20]
+  wire [31:0] sram_io_araddr; // @[TopLevel.scala 14:20]
+  wire  sram_io_arvalid; // @[TopLevel.scala 14:20]
+  wire  sram_io_arready; // @[TopLevel.scala 14:20]
+  wire [31:0] sram_io_rdata; // @[TopLevel.scala 14:20]
+  wire  sram_io_rvalid; // @[TopLevel.scala 14:20]
+  wire  sram_io_rready; // @[TopLevel.scala 14:20]
+  wire [31:0] sram_io_awaddr; // @[TopLevel.scala 14:20]
+  wire  sram_io_awvalid; // @[TopLevel.scala 14:20]
+  wire  sram_io_awready; // @[TopLevel.scala 14:20]
+  wire [31:0] sram_io_wdata; // @[TopLevel.scala 14:20]
+  wire [3:0] sram_io_wstrb; // @[TopLevel.scala 14:20]
+  wire  sram_io_wvalid; // @[TopLevel.scala 14:20]
+  wire  sram_io_wready; // @[TopLevel.scala 14:20]
+  wire  sram_io_bvalid; // @[TopLevel.scala 14:20]
+  wire  sram_io_bready; // @[TopLevel.scala 14:20]
+  wire  ifu_clock; // @[TopLevel.scala 15:19]
+  wire  ifu_reset; // @[TopLevel.scala 15:19]
+  wire  ifu_io_in_ready; // @[TopLevel.scala 15:19]
+  wire  ifu_io_in_valid; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_in_bits_pc; // @[TopLevel.scala 15:19]
+  wire  ifu_io_out_ready; // @[TopLevel.scala 15:19]
+  wire  ifu_io_out_valid; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_out_bits_inst; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_out_bits_pc; // @[TopLevel.scala 15:19]
+  wire  ifu_io_test_imem_en; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_test_pc; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_imem_araddr; // @[TopLevel.scala 15:19]
+  wire  ifu_io_imem_arvalid; // @[TopLevel.scala 15:19]
+  wire  ifu_io_imem_arready; // @[TopLevel.scala 15:19]
+  wire [31:0] ifu_io_imem_rdata; // @[TopLevel.scala 15:19]
+  wire  ifu_io_imem_rvalid; // @[TopLevel.scala 15:19]
+  wire  ifu_io_imem_rready; // @[TopLevel.scala 15:19]
+  wire  idu_clock; // @[TopLevel.scala 16:19]
+  wire  idu_reset; // @[TopLevel.scala 16:19]
+  wire  idu_io_in_ready; // @[TopLevel.scala 16:19]
+  wire  idu_io_in_valid; // @[TopLevel.scala 16:19]
+  wire [31:0] idu_io_in_bits_inst; // @[TopLevel.scala 16:19]
+  wire [31:0] idu_io_in_bits_pc; // @[TopLevel.scala 16:19]
+  wire  idu_io_out_ready; // @[TopLevel.scala 16:19]
+  wire  idu_io_out_valid; // @[TopLevel.scala 16:19]
+  wire [2:0] idu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 16:19]
+  wire [1:0] idu_io_out_bits_control_signal_A_sel; // @[TopLevel.scala 16:19]
+  wire [1:0] idu_io_out_bits_control_signal_B_sel; // @[TopLevel.scala 16:19]
+  wire [3:0] idu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 16:19]
+  wire [5:0] idu_io_out_bits_control_signal_ALU_sel; // @[TopLevel.scala 16:19]
+  wire [1:0] idu_io_out_bits_control_signal_csr_sel; // @[TopLevel.scala 16:19]
+  wire [7:0] idu_io_out_bits_control_signal_ebreak_en; // @[TopLevel.scala 16:19]
+  wire [7:0] idu_io_out_bits_control_signal_ebreak_code; // @[TopLevel.scala 16:19]
+  wire  idu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 16:19]
+  wire  idu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 16:19]
+  wire [2:0] idu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 16:19]
+  wire [31:0] idu_io_out_bits_imm; // @[TopLevel.scala 16:19]
+  wire [31:0] idu_io_out_bits_pc; // @[TopLevel.scala 16:19]
+  wire [31:0] idu_io_out_bits_inst; // @[TopLevel.scala 16:19]
+  wire  exu_clock; // @[TopLevel.scala 17:19]
+  wire  exu_reset; // @[TopLevel.scala 17:19]
+  wire  exu_io_in_ready; // @[TopLevel.scala 17:19]
+  wire  exu_io_in_valid; // @[TopLevel.scala 17:19]
+  wire [2:0] exu_io_in_bits_control_signal_PC_sel; // @[TopLevel.scala 17:19]
+  wire [1:0] exu_io_in_bits_control_signal_A_sel; // @[TopLevel.scala 17:19]
+  wire [1:0] exu_io_in_bits_control_signal_B_sel; // @[TopLevel.scala 17:19]
+  wire [3:0] exu_io_in_bits_control_signal_WB_sel; // @[TopLevel.scala 17:19]
+  wire [5:0] exu_io_in_bits_control_signal_ALU_sel; // @[TopLevel.scala 17:19]
+  wire [1:0] exu_io_in_bits_control_signal_csr_sel; // @[TopLevel.scala 17:19]
+  wire [7:0] exu_io_in_bits_control_signal_ebreak_en; // @[TopLevel.scala 17:19]
+  wire [7:0] exu_io_in_bits_control_signal_ebreak_code; // @[TopLevel.scala 17:19]
+  wire  exu_io_in_bits_control_signal_dmem_read_en; // @[TopLevel.scala 17:19]
+  wire  exu_io_in_bits_control_signal_dmem_write_en; // @[TopLevel.scala 17:19]
+  wire [2:0] exu_io_in_bits_control_signal_dmem_write_type; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_in_bits_imm; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_in_bits_pc; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_in_bits_inst; // @[TopLevel.scala 17:19]
+  wire  exu_io_out_ready; // @[TopLevel.scala 17:19]
+  wire  exu_io_out_valid; // @[TopLevel.scala 17:19]
+  wire [2:0] exu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 17:19]
+  wire [3:0] exu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 17:19]
+  wire  exu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 17:19]
+  wire  exu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 17:19]
+  wire [2:0] exu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_imm; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_pc; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_inst; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_alu_result; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_csr_pc_result; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_csr_rdata; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_out_bits_reg2_data; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_0; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_1; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_2; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_3; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_4; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_5; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_6; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_7; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_8; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_9; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_10; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_11; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_12; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_13; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_14; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_15; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_16; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_17; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_18; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_19; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_20; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_21; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_22; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_23; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_24; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_25; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_26; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_27; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_28; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_29; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_30; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_regs_31; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_csr_0; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_csr_1; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_csr_2; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_test_csr_3; // @[TopLevel.scala 17:19]
+  wire  exu_io_wb_en; // @[TopLevel.scala 17:19]
+  wire [31:0] exu_io_wb_data; // @[TopLevel.scala 17:19]
+  wire [4:0] exu_io_wb_addr; // @[TopLevel.scala 17:19]
+  wire  wbu_clock; // @[TopLevel.scala 18:19]
+  wire  wbu_reset; // @[TopLevel.scala 18:19]
+  wire  wbu_io_in_ready; // @[TopLevel.scala 18:19]
+  wire  wbu_io_in_valid; // @[TopLevel.scala 18:19]
+  wire [2:0] wbu_io_in_bits_control_signal_PC_sel; // @[TopLevel.scala 18:19]
+  wire [3:0] wbu_io_in_bits_control_signal_WB_sel; // @[TopLevel.scala 18:19]
+  wire  wbu_io_in_bits_control_signal_dmem_read_en; // @[TopLevel.scala 18:19]
+  wire  wbu_io_in_bits_control_signal_dmem_write_en; // @[TopLevel.scala 18:19]
+  wire [2:0] wbu_io_in_bits_control_signal_dmem_write_type; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_imm; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_pc; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_inst; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_alu_result; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_csr_pc_result; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_csr_rdata; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_in_bits_reg2_data; // @[TopLevel.scala 18:19]
+  wire  wbu_io_out_ready; // @[TopLevel.scala 18:19]
+  wire  wbu_io_out_valid; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_out_bits_pc; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_wb_data; // @[TopLevel.scala 18:19]
+  wire [4:0] wbu_io_wb_addr; // @[TopLevel.scala 18:19]
+  wire  wbu_io_wb_en; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_dmem_araddr; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_arvalid; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_arready; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_dmem_rdata; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_rvalid; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_rready; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_dmem_awaddr; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_awvalid; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_awready; // @[TopLevel.scala 18:19]
+  wire [31:0] wbu_io_dmem_wdata; // @[TopLevel.scala 18:19]
+  wire [3:0] wbu_io_dmem_wstrb; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_wvalid; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_wready; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_bvalid; // @[TopLevel.scala 18:19]
+  wire  wbu_io_dmem_bready; // @[TopLevel.scala 18:19]
+  reg  start_tick; // @[TopLevel.scala 20:27]
   AxiArbiter sram_arbiter ( // @[TopLevel.scala 12:28]
     .clock(sram_arbiter_clock),
     .reset(sram_arbiter_reset),
@@ -2727,7 +2874,41 @@ module TopLevel(
     .io_out_bvalid(sram_arbiter_io_out_bvalid),
     .io_out_bready(sram_arbiter_io_out_bready)
   );
-  SRAM sram ( // @[TopLevel.scala 13:20]
+  AxiXbar axi_xbar ( // @[TopLevel.scala 13:24]
+    .clock(axi_xbar_clock),
+    .reset(axi_xbar_reset),
+    .io_in_araddr(axi_xbar_io_in_araddr),
+    .io_in_arvalid(axi_xbar_io_in_arvalid),
+    .io_in_arready(axi_xbar_io_in_arready),
+    .io_in_rdata(axi_xbar_io_in_rdata),
+    .io_in_rvalid(axi_xbar_io_in_rvalid),
+    .io_in_rready(axi_xbar_io_in_rready),
+    .io_in_awaddr(axi_xbar_io_in_awaddr),
+    .io_in_awvalid(axi_xbar_io_in_awvalid),
+    .io_in_awready(axi_xbar_io_in_awready),
+    .io_in_wdata(axi_xbar_io_in_wdata),
+    .io_in_wstrb(axi_xbar_io_in_wstrb),
+    .io_in_wvalid(axi_xbar_io_in_wvalid),
+    .io_in_wready(axi_xbar_io_in_wready),
+    .io_in_bvalid(axi_xbar_io_in_bvalid),
+    .io_in_bready(axi_xbar_io_in_bready),
+    .io_out_0_araddr(axi_xbar_io_out_0_araddr),
+    .io_out_0_arvalid(axi_xbar_io_out_0_arvalid),
+    .io_out_0_arready(axi_xbar_io_out_0_arready),
+    .io_out_0_rdata(axi_xbar_io_out_0_rdata),
+    .io_out_0_rvalid(axi_xbar_io_out_0_rvalid),
+    .io_out_0_rready(axi_xbar_io_out_0_rready),
+    .io_out_0_awaddr(axi_xbar_io_out_0_awaddr),
+    .io_out_0_awvalid(axi_xbar_io_out_0_awvalid),
+    .io_out_0_awready(axi_xbar_io_out_0_awready),
+    .io_out_0_wdata(axi_xbar_io_out_0_wdata),
+    .io_out_0_wstrb(axi_xbar_io_out_0_wstrb),
+    .io_out_0_wvalid(axi_xbar_io_out_0_wvalid),
+    .io_out_0_wready(axi_xbar_io_out_0_wready),
+    .io_out_0_bvalid(axi_xbar_io_out_0_bvalid),
+    .io_out_0_bready(axi_xbar_io_out_0_bready)
+  );
+  SRAM sram ( // @[TopLevel.scala 14:20]
     .clock(sram_clock),
     .reset(sram_reset),
     .io_araddr(sram_io_araddr),
@@ -2746,7 +2927,7 @@ module TopLevel(
     .io_bvalid(sram_io_bvalid),
     .io_bready(sram_io_bready)
   );
-  IFU ifu ( // @[TopLevel.scala 14:19]
+  IFU ifu ( // @[TopLevel.scala 15:19]
     .clock(ifu_clock),
     .reset(ifu_reset),
     .io_in_ready(ifu_io_in_ready),
@@ -2765,7 +2946,7 @@ module TopLevel(
     .io_imem_rvalid(ifu_io_imem_rvalid),
     .io_imem_rready(ifu_io_imem_rready)
   );
-  IDU idu ( // @[TopLevel.scala 15:19]
+  IDU idu ( // @[TopLevel.scala 16:19]
     .clock(idu_clock),
     .reset(idu_reset),
     .io_in_ready(idu_io_in_ready),
@@ -2789,7 +2970,7 @@ module TopLevel(
     .io_out_bits_pc(idu_io_out_bits_pc),
     .io_out_bits_inst(idu_io_out_bits_inst)
   );
-  EXU exu ( // @[TopLevel.scala 16:19]
+  EXU exu ( // @[TopLevel.scala 17:19]
     .clock(exu_clock),
     .reset(exu_reset),
     .io_in_ready(exu_io_in_ready),
@@ -2862,7 +3043,7 @@ module TopLevel(
     .io_wb_data(exu_io_wb_data),
     .io_wb_addr(exu_io_wb_addr)
   );
-  WBU wbu ( // @[TopLevel.scala 17:19]
+  WBU wbu ( // @[TopLevel.scala 18:19]
     .clock(wbu_clock),
     .reset(wbu_reset),
     .io_in_ready(wbu_io_in_ready),
@@ -2901,132 +3082,149 @@ module TopLevel(
     .io_dmem_bvalid(wbu_io_dmem_bvalid),
     .io_dmem_bready(wbu_io_dmem_bready)
   );
-  assign io_test_pc = ifu_io_test_pc; // @[TopLevel.scala 41:14]
-  assign io_test_regs_0 = exu_io_test_regs_0; // @[TopLevel.scala 39:16]
-  assign io_test_regs_1 = exu_io_test_regs_1; // @[TopLevel.scala 39:16]
-  assign io_test_regs_2 = exu_io_test_regs_2; // @[TopLevel.scala 39:16]
-  assign io_test_regs_3 = exu_io_test_regs_3; // @[TopLevel.scala 39:16]
-  assign io_test_regs_4 = exu_io_test_regs_4; // @[TopLevel.scala 39:16]
-  assign io_test_regs_5 = exu_io_test_regs_5; // @[TopLevel.scala 39:16]
-  assign io_test_regs_6 = exu_io_test_regs_6; // @[TopLevel.scala 39:16]
-  assign io_test_regs_7 = exu_io_test_regs_7; // @[TopLevel.scala 39:16]
-  assign io_test_regs_8 = exu_io_test_regs_8; // @[TopLevel.scala 39:16]
-  assign io_test_regs_9 = exu_io_test_regs_9; // @[TopLevel.scala 39:16]
-  assign io_test_regs_10 = exu_io_test_regs_10; // @[TopLevel.scala 39:16]
-  assign io_test_regs_11 = exu_io_test_regs_11; // @[TopLevel.scala 39:16]
-  assign io_test_regs_12 = exu_io_test_regs_12; // @[TopLevel.scala 39:16]
-  assign io_test_regs_13 = exu_io_test_regs_13; // @[TopLevel.scala 39:16]
-  assign io_test_regs_14 = exu_io_test_regs_14; // @[TopLevel.scala 39:16]
-  assign io_test_regs_15 = exu_io_test_regs_15; // @[TopLevel.scala 39:16]
-  assign io_test_regs_16 = exu_io_test_regs_16; // @[TopLevel.scala 39:16]
-  assign io_test_regs_17 = exu_io_test_regs_17; // @[TopLevel.scala 39:16]
-  assign io_test_regs_18 = exu_io_test_regs_18; // @[TopLevel.scala 39:16]
-  assign io_test_regs_19 = exu_io_test_regs_19; // @[TopLevel.scala 39:16]
-  assign io_test_regs_20 = exu_io_test_regs_20; // @[TopLevel.scala 39:16]
-  assign io_test_regs_21 = exu_io_test_regs_21; // @[TopLevel.scala 39:16]
-  assign io_test_regs_22 = exu_io_test_regs_22; // @[TopLevel.scala 39:16]
-  assign io_test_regs_23 = exu_io_test_regs_23; // @[TopLevel.scala 39:16]
-  assign io_test_regs_24 = exu_io_test_regs_24; // @[TopLevel.scala 39:16]
-  assign io_test_regs_25 = exu_io_test_regs_25; // @[TopLevel.scala 39:16]
-  assign io_test_regs_26 = exu_io_test_regs_26; // @[TopLevel.scala 39:16]
-  assign io_test_regs_27 = exu_io_test_regs_27; // @[TopLevel.scala 39:16]
-  assign io_test_regs_28 = exu_io_test_regs_28; // @[TopLevel.scala 39:16]
-  assign io_test_regs_29 = exu_io_test_regs_29; // @[TopLevel.scala 39:16]
-  assign io_test_regs_30 = exu_io_test_regs_30; // @[TopLevel.scala 39:16]
-  assign io_test_regs_31 = exu_io_test_regs_31; // @[TopLevel.scala 39:16]
-  assign io_test_csr_0 = exu_io_test_csr_0; // @[TopLevel.scala 40:15]
-  assign io_test_csr_1 = exu_io_test_csr_1; // @[TopLevel.scala 40:15]
-  assign io_test_csr_2 = exu_io_test_csr_2; // @[TopLevel.scala 40:15]
-  assign io_test_csr_3 = exu_io_test_csr_3; // @[TopLevel.scala 40:15]
-  assign io_test_imem_en = ifu_io_test_imem_en; // @[TopLevel.scala 38:19]
+  assign io_test_pc = ifu_io_test_pc; // @[TopLevel.scala 43:14]
+  assign io_test_regs_0 = exu_io_test_regs_0; // @[TopLevel.scala 41:16]
+  assign io_test_regs_1 = exu_io_test_regs_1; // @[TopLevel.scala 41:16]
+  assign io_test_regs_2 = exu_io_test_regs_2; // @[TopLevel.scala 41:16]
+  assign io_test_regs_3 = exu_io_test_regs_3; // @[TopLevel.scala 41:16]
+  assign io_test_regs_4 = exu_io_test_regs_4; // @[TopLevel.scala 41:16]
+  assign io_test_regs_5 = exu_io_test_regs_5; // @[TopLevel.scala 41:16]
+  assign io_test_regs_6 = exu_io_test_regs_6; // @[TopLevel.scala 41:16]
+  assign io_test_regs_7 = exu_io_test_regs_7; // @[TopLevel.scala 41:16]
+  assign io_test_regs_8 = exu_io_test_regs_8; // @[TopLevel.scala 41:16]
+  assign io_test_regs_9 = exu_io_test_regs_9; // @[TopLevel.scala 41:16]
+  assign io_test_regs_10 = exu_io_test_regs_10; // @[TopLevel.scala 41:16]
+  assign io_test_regs_11 = exu_io_test_regs_11; // @[TopLevel.scala 41:16]
+  assign io_test_regs_12 = exu_io_test_regs_12; // @[TopLevel.scala 41:16]
+  assign io_test_regs_13 = exu_io_test_regs_13; // @[TopLevel.scala 41:16]
+  assign io_test_regs_14 = exu_io_test_regs_14; // @[TopLevel.scala 41:16]
+  assign io_test_regs_15 = exu_io_test_regs_15; // @[TopLevel.scala 41:16]
+  assign io_test_regs_16 = exu_io_test_regs_16; // @[TopLevel.scala 41:16]
+  assign io_test_regs_17 = exu_io_test_regs_17; // @[TopLevel.scala 41:16]
+  assign io_test_regs_18 = exu_io_test_regs_18; // @[TopLevel.scala 41:16]
+  assign io_test_regs_19 = exu_io_test_regs_19; // @[TopLevel.scala 41:16]
+  assign io_test_regs_20 = exu_io_test_regs_20; // @[TopLevel.scala 41:16]
+  assign io_test_regs_21 = exu_io_test_regs_21; // @[TopLevel.scala 41:16]
+  assign io_test_regs_22 = exu_io_test_regs_22; // @[TopLevel.scala 41:16]
+  assign io_test_regs_23 = exu_io_test_regs_23; // @[TopLevel.scala 41:16]
+  assign io_test_regs_24 = exu_io_test_regs_24; // @[TopLevel.scala 41:16]
+  assign io_test_regs_25 = exu_io_test_regs_25; // @[TopLevel.scala 41:16]
+  assign io_test_regs_26 = exu_io_test_regs_26; // @[TopLevel.scala 41:16]
+  assign io_test_regs_27 = exu_io_test_regs_27; // @[TopLevel.scala 41:16]
+  assign io_test_regs_28 = exu_io_test_regs_28; // @[TopLevel.scala 41:16]
+  assign io_test_regs_29 = exu_io_test_regs_29; // @[TopLevel.scala 41:16]
+  assign io_test_regs_30 = exu_io_test_regs_30; // @[TopLevel.scala 41:16]
+  assign io_test_regs_31 = exu_io_test_regs_31; // @[TopLevel.scala 41:16]
+  assign io_test_csr_0 = exu_io_test_csr_0; // @[TopLevel.scala 42:15]
+  assign io_test_csr_1 = exu_io_test_csr_1; // @[TopLevel.scala 42:15]
+  assign io_test_csr_2 = exu_io_test_csr_2; // @[TopLevel.scala 42:15]
+  assign io_test_csr_3 = exu_io_test_csr_3; // @[TopLevel.scala 42:15]
+  assign io_test_imem_en = ifu_io_test_imem_en; // @[TopLevel.scala 40:19]
   assign sram_arbiter_clock = clock;
   assign sram_arbiter_reset = reset;
-  assign sram_arbiter_io_in1_araddr = ifu_io_imem_araddr; // @[TopLevel.scala 35:23]
-  assign sram_arbiter_io_in1_arvalid = ifu_io_imem_arvalid; // @[TopLevel.scala 35:23]
-  assign sram_arbiter_io_in2_araddr = wbu_io_dmem_araddr; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_arvalid = wbu_io_dmem_arvalid; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_awaddr = wbu_io_dmem_awaddr; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_awvalid = wbu_io_dmem_awvalid; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_wdata = wbu_io_dmem_wdata; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_wstrb = wbu_io_dmem_wstrb; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_wvalid = wbu_io_dmem_wvalid; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_in2_bready = wbu_io_dmem_bready; // @[TopLevel.scala 36:23]
-  assign sram_arbiter_io_out_arready = sram_io_arready; // @[TopLevel.scala 34:11]
-  assign sram_arbiter_io_out_rdata = sram_io_rdata; // @[TopLevel.scala 34:11]
-  assign sram_arbiter_io_out_rvalid = sram_io_rvalid; // @[TopLevel.scala 34:11]
-  assign sram_arbiter_io_out_awready = sram_io_awready; // @[TopLevel.scala 34:11]
-  assign sram_arbiter_io_out_wready = sram_io_wready; // @[TopLevel.scala 34:11]
-  assign sram_arbiter_io_out_bvalid = sram_io_bvalid; // @[TopLevel.scala 34:11]
+  assign sram_arbiter_io_in1_araddr = ifu_io_imem_araddr; // @[TopLevel.scala 37:23]
+  assign sram_arbiter_io_in1_arvalid = ifu_io_imem_arvalid; // @[TopLevel.scala 37:23]
+  assign sram_arbiter_io_in2_araddr = wbu_io_dmem_araddr; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_arvalid = wbu_io_dmem_arvalid; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_awaddr = wbu_io_dmem_awaddr; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_awvalid = wbu_io_dmem_awvalid; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_wdata = wbu_io_dmem_wdata; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_wstrb = wbu_io_dmem_wstrb; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_wvalid = wbu_io_dmem_wvalid; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_in2_bready = wbu_io_dmem_bready; // @[TopLevel.scala 38:23]
+  assign sram_arbiter_io_out_arready = axi_xbar_io_in_arready; // @[TopLevel.scala 35:18]
+  assign sram_arbiter_io_out_rdata = axi_xbar_io_in_rdata; // @[TopLevel.scala 35:18]
+  assign sram_arbiter_io_out_rvalid = axi_xbar_io_in_rvalid; // @[TopLevel.scala 35:18]
+  assign sram_arbiter_io_out_awready = axi_xbar_io_in_awready; // @[TopLevel.scala 35:18]
+  assign sram_arbiter_io_out_wready = axi_xbar_io_in_wready; // @[TopLevel.scala 35:18]
+  assign sram_arbiter_io_out_bvalid = axi_xbar_io_in_bvalid; // @[TopLevel.scala 35:18]
+  assign axi_xbar_clock = clock;
+  assign axi_xbar_reset = reset;
+  assign axi_xbar_io_in_araddr = sram_arbiter_io_out_araddr; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_arvalid = sram_arbiter_io_out_arvalid; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_rready = sram_arbiter_io_out_rready; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_awaddr = sram_arbiter_io_out_awaddr; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_awvalid = sram_arbiter_io_out_awvalid; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_wdata = sram_arbiter_io_out_wdata; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_wstrb = sram_arbiter_io_out_wstrb; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_wvalid = sram_arbiter_io_out_wvalid; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_in_bready = sram_arbiter_io_out_bready; // @[TopLevel.scala 35:18]
+  assign axi_xbar_io_out_0_arready = sram_io_arready; // @[TopLevel.scala 36:11]
+  assign axi_xbar_io_out_0_rdata = sram_io_rdata; // @[TopLevel.scala 36:11]
+  assign axi_xbar_io_out_0_rvalid = sram_io_rvalid; // @[TopLevel.scala 36:11]
+  assign axi_xbar_io_out_0_awready = sram_io_awready; // @[TopLevel.scala 36:11]
+  assign axi_xbar_io_out_0_wready = sram_io_wready; // @[TopLevel.scala 36:11]
+  assign axi_xbar_io_out_0_bvalid = sram_io_bvalid; // @[TopLevel.scala 36:11]
   assign sram_clock = clock;
   assign sram_reset = reset;
-  assign sram_io_araddr = sram_arbiter_io_out_araddr; // @[TopLevel.scala 34:11]
-  assign sram_io_arvalid = sram_arbiter_io_out_arvalid; // @[TopLevel.scala 34:11]
-  assign sram_io_rready = sram_arbiter_io_out_rready; // @[TopLevel.scala 34:11]
-  assign sram_io_awaddr = sram_arbiter_io_out_awaddr; // @[TopLevel.scala 34:11]
-  assign sram_io_awvalid = sram_arbiter_io_out_awvalid; // @[TopLevel.scala 34:11]
-  assign sram_io_wdata = sram_arbiter_io_out_wdata; // @[TopLevel.scala 34:11]
-  assign sram_io_wstrb = sram_arbiter_io_out_wstrb; // @[TopLevel.scala 34:11]
-  assign sram_io_wvalid = sram_arbiter_io_out_wvalid; // @[TopLevel.scala 34:11]
-  assign sram_io_bready = sram_arbiter_io_out_bready; // @[TopLevel.scala 34:11]
+  assign sram_io_araddr = axi_xbar_io_out_0_araddr; // @[TopLevel.scala 36:11]
+  assign sram_io_arvalid = axi_xbar_io_out_0_arvalid; // @[TopLevel.scala 36:11]
+  assign sram_io_rready = axi_xbar_io_out_0_rready; // @[TopLevel.scala 36:11]
+  assign sram_io_awaddr = axi_xbar_io_out_0_awaddr; // @[TopLevel.scala 36:11]
+  assign sram_io_awvalid = axi_xbar_io_out_0_awvalid; // @[TopLevel.scala 36:11]
+  assign sram_io_wdata = axi_xbar_io_out_0_wdata; // @[TopLevel.scala 36:11]
+  assign sram_io_wstrb = axi_xbar_io_out_0_wstrb; // @[TopLevel.scala 36:11]
+  assign sram_io_wvalid = axi_xbar_io_out_0_wvalid; // @[TopLevel.scala 36:11]
+  assign sram_io_bready = axi_xbar_io_out_0_bready; // @[TopLevel.scala 36:11]
   assign ifu_clock = clock;
   assign ifu_reset = reset;
-  assign ifu_io_in_valid = start_tick | wbu_io_out_valid; // @[TopLevel.scala 22:25]
-  assign ifu_io_in_bits_pc = start_tick ? 32'h80000000 : wbu_io_out_bits_pc; // @[TopLevel.scala 23:27]
-  assign ifu_io_out_ready = idu_io_in_ready; // @[TopLevel.scala 26:14]
-  assign ifu_io_imem_arready = sram_arbiter_io_in1_arready; // @[TopLevel.scala 35:23]
-  assign ifu_io_imem_rdata = sram_arbiter_io_in1_rdata; // @[TopLevel.scala 35:23]
-  assign ifu_io_imem_rvalid = sram_arbiter_io_in1_rvalid; // @[TopLevel.scala 35:23]
+  assign ifu_io_in_valid = start_tick | wbu_io_out_valid; // @[TopLevel.scala 23:25]
+  assign ifu_io_in_bits_pc = start_tick ? 32'h80000000 : wbu_io_out_bits_pc; // @[TopLevel.scala 24:27]
+  assign ifu_io_out_ready = idu_io_in_ready; // @[TopLevel.scala 27:14]
+  assign ifu_io_imem_arready = sram_arbiter_io_in1_arready; // @[TopLevel.scala 37:23]
+  assign ifu_io_imem_rdata = sram_arbiter_io_in1_rdata; // @[TopLevel.scala 37:23]
+  assign ifu_io_imem_rvalid = sram_arbiter_io_in1_rvalid; // @[TopLevel.scala 37:23]
   assign idu_clock = clock;
   assign idu_reset = reset;
-  assign idu_io_in_valid = ifu_io_out_valid; // @[TopLevel.scala 26:14]
-  assign idu_io_in_bits_inst = ifu_io_out_bits_inst; // @[TopLevel.scala 26:14]
-  assign idu_io_in_bits_pc = ifu_io_out_bits_pc; // @[TopLevel.scala 26:14]
-  assign idu_io_out_ready = exu_io_in_ready; // @[TopLevel.scala 27:13]
+  assign idu_io_in_valid = ifu_io_out_valid; // @[TopLevel.scala 27:14]
+  assign idu_io_in_bits_inst = ifu_io_out_bits_inst; // @[TopLevel.scala 27:14]
+  assign idu_io_in_bits_pc = ifu_io_out_bits_pc; // @[TopLevel.scala 27:14]
+  assign idu_io_out_ready = exu_io_in_ready; // @[TopLevel.scala 28:13]
   assign exu_clock = clock;
   assign exu_reset = reset;
-  assign exu_io_in_valid = idu_io_out_valid; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_PC_sel = idu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_A_sel = idu_io_out_bits_control_signal_A_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_B_sel = idu_io_out_bits_control_signal_B_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_WB_sel = idu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_ALU_sel = idu_io_out_bits_control_signal_ALU_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_csr_sel = idu_io_out_bits_control_signal_csr_sel; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_ebreak_en = idu_io_out_bits_control_signal_ebreak_en; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_ebreak_code = idu_io_out_bits_control_signal_ebreak_code; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_dmem_read_en = idu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_dmem_write_en = idu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_control_signal_dmem_write_type = idu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_imm = idu_io_out_bits_imm; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_pc = idu_io_out_bits_pc; // @[TopLevel.scala 27:13]
-  assign exu_io_in_bits_inst = idu_io_out_bits_inst; // @[TopLevel.scala 27:13]
-  assign exu_io_out_ready = wbu_io_in_ready; // @[TopLevel.scala 28:13]
-  assign exu_io_wb_en = wbu_io_wb_en; // @[TopLevel.scala 32:16]
-  assign exu_io_wb_data = wbu_io_wb_data; // @[TopLevel.scala 30:18]
-  assign exu_io_wb_addr = wbu_io_wb_addr; // @[TopLevel.scala 31:18]
+  assign exu_io_in_valid = idu_io_out_valid; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_PC_sel = idu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_A_sel = idu_io_out_bits_control_signal_A_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_B_sel = idu_io_out_bits_control_signal_B_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_WB_sel = idu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_ALU_sel = idu_io_out_bits_control_signal_ALU_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_csr_sel = idu_io_out_bits_control_signal_csr_sel; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_ebreak_en = idu_io_out_bits_control_signal_ebreak_en; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_ebreak_code = idu_io_out_bits_control_signal_ebreak_code; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_dmem_read_en = idu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_dmem_write_en = idu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_control_signal_dmem_write_type = idu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_imm = idu_io_out_bits_imm; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_pc = idu_io_out_bits_pc; // @[TopLevel.scala 28:13]
+  assign exu_io_in_bits_inst = idu_io_out_bits_inst; // @[TopLevel.scala 28:13]
+  assign exu_io_out_ready = wbu_io_in_ready; // @[TopLevel.scala 29:13]
+  assign exu_io_wb_en = wbu_io_wb_en; // @[TopLevel.scala 33:16]
+  assign exu_io_wb_data = wbu_io_wb_data; // @[TopLevel.scala 31:18]
+  assign exu_io_wb_addr = wbu_io_wb_addr; // @[TopLevel.scala 32:18]
   assign wbu_clock = clock;
   assign wbu_reset = reset;
-  assign wbu_io_in_valid = exu_io_out_valid; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_control_signal_PC_sel = exu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_control_signal_WB_sel = exu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_control_signal_dmem_read_en = exu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_control_signal_dmem_write_en = exu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_control_signal_dmem_write_type = exu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_imm = exu_io_out_bits_imm; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_pc = exu_io_out_bits_pc; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_inst = exu_io_out_bits_inst; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_alu_result = exu_io_out_bits_alu_result; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_csr_pc_result = exu_io_out_bits_csr_pc_result; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_csr_rdata = exu_io_out_bits_csr_rdata; // @[TopLevel.scala 28:13]
-  assign wbu_io_in_bits_reg2_data = exu_io_out_bits_reg2_data; // @[TopLevel.scala 28:13]
-  assign wbu_io_out_ready = ifu_io_in_ready; // @[TopLevel.scala 24:20]
-  assign wbu_io_dmem_arready = sram_arbiter_io_in2_arready; // @[TopLevel.scala 36:23]
-  assign wbu_io_dmem_rdata = sram_arbiter_io_in2_rdata; // @[TopLevel.scala 36:23]
-  assign wbu_io_dmem_rvalid = sram_arbiter_io_in2_rvalid; // @[TopLevel.scala 36:23]
-  assign wbu_io_dmem_awready = sram_arbiter_io_in2_awready; // @[TopLevel.scala 36:23]
-  assign wbu_io_dmem_wready = sram_arbiter_io_in2_wready; // @[TopLevel.scala 36:23]
-  assign wbu_io_dmem_bvalid = sram_arbiter_io_in2_bvalid; // @[TopLevel.scala 36:23]
+  assign wbu_io_in_valid = exu_io_out_valid; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_control_signal_PC_sel = exu_io_out_bits_control_signal_PC_sel; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_control_signal_WB_sel = exu_io_out_bits_control_signal_WB_sel; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_control_signal_dmem_read_en = exu_io_out_bits_control_signal_dmem_read_en; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_control_signal_dmem_write_en = exu_io_out_bits_control_signal_dmem_write_en; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_control_signal_dmem_write_type = exu_io_out_bits_control_signal_dmem_write_type; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_imm = exu_io_out_bits_imm; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_pc = exu_io_out_bits_pc; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_inst = exu_io_out_bits_inst; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_alu_result = exu_io_out_bits_alu_result; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_csr_pc_result = exu_io_out_bits_csr_pc_result; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_csr_rdata = exu_io_out_bits_csr_rdata; // @[TopLevel.scala 29:13]
+  assign wbu_io_in_bits_reg2_data = exu_io_out_bits_reg2_data; // @[TopLevel.scala 29:13]
+  assign wbu_io_out_ready = ifu_io_in_ready; // @[TopLevel.scala 25:20]
+  assign wbu_io_dmem_arready = sram_arbiter_io_in2_arready; // @[TopLevel.scala 38:23]
+  assign wbu_io_dmem_rdata = sram_arbiter_io_in2_rdata; // @[TopLevel.scala 38:23]
+  assign wbu_io_dmem_rvalid = sram_arbiter_io_in2_rvalid; // @[TopLevel.scala 38:23]
+  assign wbu_io_dmem_awready = sram_arbiter_io_in2_awready; // @[TopLevel.scala 38:23]
+  assign wbu_io_dmem_wready = sram_arbiter_io_in2_wready; // @[TopLevel.scala 38:23]
+  assign wbu_io_dmem_bvalid = sram_arbiter_io_in2_bvalid; // @[TopLevel.scala 38:23]
   always @(posedge clock) begin
-    start_tick <= reset; // @[TopLevel.scala 19:{27,27} 20:14]
+    start_tick <= reset; // @[TopLevel.scala 20:{27,27} 21:14]
   end
 // Register and memory initialization
 `ifdef RANDOMIZE_GARBAGE_ASSIGN
