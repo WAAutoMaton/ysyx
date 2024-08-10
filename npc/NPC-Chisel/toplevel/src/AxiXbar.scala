@@ -27,22 +27,23 @@ object RangeLookup {
   }
 }
 
-// 由于Xbar 设计限制，必须先（或同时）提供 awvalid 和 awaddr；
-// 先提供 wvalid 将导致无法握手（由于根本不知道目标后端是谁）。
+// 由于Xbar 设计限制，必须先提供 awvalid 和 awaddr（或与wvalid同时提供）；
+// 先提供 wvalid 将导致无法握手（由于不知道目标后端是谁）。
+// 注意：输出端设备有内存时（范围为整个值域），必须把内存放在第0项上。
 class AxiXbar(val OutNum: Int, val AddressMap: Array[(Long, Long)]) extends Module{
   val io = IO(new Bundle {
     val in = new AxiLiteIO()
     val out = Vec(OutNum, Flipped(new AxiLiteIO()))
   })
 
-  val State_Bit_Width = log2Up(OutNum).W
+  val State_Bit_Width = (log2Ceil(OutNum)+1).W
 
   // state_r 值为 i 表示当前正在处理第 i 个输出端口，值为 OutNum 表示空闲状态
   val state_r = RegInit(OutNum.U(State_Bit_Width))
   val state_r_idle = OutNum.U
   state_r := MuxLookup(state_r, OutNum.U,
       (0 until OutNum).map(i => {
-          i.U(State_Bit_Width) -> Mux(io.in.rready && io.out(i).arvalid, state_r, i.U(State_Bit_Width))
+          i.U(State_Bit_Width) -> Mux(io.in.rready && io.out(i).rvalid, state_r_idle, i.U(State_Bit_Width))
         }) :+ (state_r_idle -> Mux(io.in.arvalid, RangeLookup(io.in.araddr, state_r_idle,
           AddressMap.map(
             {case (start, end) =>

@@ -9,8 +9,10 @@ class TopLevel() extends Module {
   })
   //val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
 
+  val uart = Module(new UART())
+  val clint = Module(new CLINT())
   val sram_arbiter = Module(new AxiArbiter())
-  val axi_xbar = Module(new AxiXbar(1, Array((0L,0xFFFFFFFFL))))
+  val axi_xbar = Module(new AxiXbar(3, Array((0L,0xFFFFFFFFL),(0xa00003f8L,0xa00003fBL),(0xa0000048L,0xa000004FL))))
   val sram = Module(new SRAM())
   val ifu = Module(new IFU())
   val idu = Module(new IDU())
@@ -34,6 +36,8 @@ class TopLevel() extends Module {
 
   axi_xbar.io.in <> sram_arbiter.io.out
   sram.io <> axi_xbar.io.out(0)
+  clint.io <> axi_xbar.io.out(2)
+  uart.io <> axi_xbar.io.out(1)
   sram_arbiter.io.in1 <> ifu.io.imem
   sram_arbiter.io.in2 <> wbu.io.dmem
 

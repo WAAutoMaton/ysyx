@@ -16,7 +16,9 @@ extern "C" {
 	int pmem_read(int raddr) {
 		word_t ret=0;
 		bool mmio=false;
+		assert(raddr!=RTC_ADDR);
 		if (raddr == RTC_ADDR) {
+			printf("%x\n",(unsigned)raddr);
 			mmio=true;
 			ret = (uint32_t) time_tmp;
 			#ifdef CONFIG_DTRACE
@@ -48,11 +50,12 @@ extern "C" {
 	}
 	void pmem_write(int waddr, int wdata, char wmask) {
 		bool mmio=false;
+		assert(waddr!=SERIAL_PORT);
 		if (waddr == SERIAL_PORT) {
 			#ifdef CONFIG_DTRACE
 			dtrace_write("serial", waddr, wdata);
 			#endif
-			putchar(wdata);
+			//putchar(wdata);
 			fflush(stdout);
 			mmio=true;
 			//fflush(stdout);
