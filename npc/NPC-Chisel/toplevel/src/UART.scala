@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util._
 
 class UART extends Module{
-  val io = IO(new AxiLiteIO())
+  val io = IO(new Axi4IO())
   val uart = Module(new UART_V())
 
   private val state_w_idle :: state_w_wait_data :: state_w_wait_addr :: state_w_write :: state_w_wait_ready :: Nil = Enum(5)

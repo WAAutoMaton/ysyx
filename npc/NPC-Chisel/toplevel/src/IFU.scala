@@ -16,7 +16,7 @@ class IFU extends Module{
     val out = Decoupled(new IFU_Output)
     val test_imem_en = Output(Bool())
     val test_pc = Output(UInt(Constant.BitWidth))
-    val imem = Flipped(new AxiLiteIO())
+    val imem = Flipped(new Axi4IO())
   })
   private val state_idle :: state_read :: state_read_wait :: state_wait_ready :: Nil = Enum(4)
   val state = RegInit(state_idle)
@@ -30,6 +30,11 @@ class IFU extends Module{
   val inst = RegInit(UInt(Constant.InstLen), 0.U)
   io.imem.araddr := pc
   io.imem.arvalid := state === state_read
+  io.imem.arlen := 0.U
+  io.imem.arsize := 2.U
+  io.imem.arburst := 0.U
+  // TODO
+  io.imem.arid := 0.U
   io.imem.rready := true.B
 
   pc := Mux(io.in.valid && io.in.ready, io.in.bits.pc, pc)
@@ -38,8 +43,13 @@ class IFU extends Module{
   io.imem.wvalid := false.B
   io.imem.awvalid := false.B
   io.imem.awaddr := 0.U
+  io.imem.awsize := 0.U
+  io.imem.awlen := 0.U
+  io.imem.awburst := 0.U
+  io.imem.awid := 0.U
   io.imem.wdata := 0.U
   io.imem.wstrb := 0.U
+  io.imem.wlast := false.B
   io.imem.bready := false.B
 
   io.in.ready := state === state_idle

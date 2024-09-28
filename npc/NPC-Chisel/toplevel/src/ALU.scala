@@ -7,7 +7,7 @@ class ALU extends Module{
     val src2 = Input(UInt(Constant.BitWidth))
     val result = Output(UInt(Constant.BitWidth))
     val sel = Input(UInt(Constant.ALUSelLen))
-  })
+  }     )
   io.result := MuxLookup(io.sel, 0.U, Seq(
     ADD -> (io.src1 + io.src2),
     SUB -> (io.src1 - io.src2),

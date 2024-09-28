@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util._
 
 class SRAM extends Module{
-  val io = IO(new AxiLiteIO())
+  val io = IO(new Axi4IO())
 
   val pmem = Module(new PMem())
   val read_delay_cnt = RegInit(UInt(32.W), 0.U)

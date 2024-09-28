@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <verilated.h>
 
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
+
 int cycle_cnt;
 
 void cpu_exec(int n) {
@@ -45,6 +48,7 @@ int main(int argc, char **argv) {
          "so file>");
     return 1;
   }
+  Verilated::commandArgs(argc, argv);
   Verilated::mkdir("logs");
   log_init();
   if (strcmp(argv[2], "batch-on") == 0) {

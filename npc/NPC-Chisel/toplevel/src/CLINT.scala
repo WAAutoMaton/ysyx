@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util._
 
 class CLINT extends Module{
-  val io = IO(new AxiLiteIO())
+  val io = IO(new Axi4IO())
   private val state_r_idle :: state_r_read :: state_r_wait_ready :: Nil = Enum(3)
 
   val state_r = RegInit(state_r_idle)
@@ -21,9 +21,13 @@ class CLINT extends Module{
   io.rdata := rdata
   io.rresp := 0.U
   io.rvalid := state_r === state_r_wait_ready
+  io.rlast := io.rvalid
+  io.rid := 0.U
 
   io.awready := false.B
   io.wready := false.B
+
   io.bresp := 0.U
   io.bvalid := false.B
+  io.bid := 0.U
 }

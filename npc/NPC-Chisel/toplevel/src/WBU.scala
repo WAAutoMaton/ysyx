@@ -8,7 +8,7 @@ class WBU extends Module{
     val wb_data = Output(UInt(Constant.BitWidth))
     val wb_addr = Output(UInt(Constant.RegAddrLen))
     val wb_en = Output(Bool())
-    val dmem = Flipped(new AxiLiteIO())
+    val dmem = Flipped(new Axi4IO())
   })
 
   private val state_idle :: state_execute :: state_mem_read :: state_mem_write :: state_read_wait :: state_write_wait :: state_wait_ready :: Nil = Enum(7)
@@ -48,40 +48,53 @@ class WBU extends Module{
     PCSelV.MRET   -> csr_pc_result
   ))
 
-  // 内存访问需要4字节对齐，非4字节对齐的 lb/lh 指令需要对结果进行偏移
-  val roffset = (alu_result(1,0)<<3.U)
-  val shift_rdata = Wire(UInt(Constant.BitWidth))
-  shift_rdata := io.dmem.rdata >> roffset
   io.wb_addr := input.inst(11, 7)
   io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && io.dmem.rvalid && io.dmem.rready)
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu_result,
     WBSelV.PC4 -> (pc+4.U),
-    WBSelV.LW -> shift_rdata,
-    WBSelV.LBU -> shift_rdata(7, 0),
-    WBSelV.LHU -> shift_rdata(15, 0),
-    WBSelV.LB -> shift_rdata(7, 0).asSInt.pad(32).asUInt,
-    WBSelV.LH -> shift_rdata(15, 0).asSInt.pad(32).asUInt,
+    WBSelV.LW -> io.dmem.rdata,
+    WBSelV.LBU -> io.dmem.rdata(7, 0),
+    WBSelV.LHU -> io.dmem.rdata(15, 0),
+    WBSelV.LB -> io.dmem.rdata(7, 0).asSInt.pad(32).asUInt,
+    WBSelV.LH -> io.dmem.rdata(15, 0).asSInt.pad(32).asUInt,
     WBSelV.CSR -> csr_rdata,
   ))
 
-  io.dmem.araddr := alu_result >> 2.U << 2.U
+  io.dmem.araddr := alu_result
   io.dmem.arvalid := state === state_mem_read
   io.dmem.rready := true.B
+  io.dmem.arlen := 0.U
+  io.dmem.arsize := MuxLookup(csig.dmem_read_type, 0.U, Seq(
+    LdValue.LB -> 0.U,
+    LdValue.LBU -> 0.U,
+    LdValue.LH -> 1.U,
+    LdValue.LHU -> 1.U,
+    LdValue.LW -> 2.U,
+  ))
+  io.dmem.arburst := 0.U
+  // TODO
+  io.dmem.arid := 0.U
 
-  val dmem_write_data = Wire(UInt(Constant.BitWidth))
-  // 内存访问需要4字节对齐，非4字节对齐的 sb/sw 指令需要对数据进行偏移
-  val woffset = alu_result(1,0)<<3.U
-  dmem_write_data := input.reg2_data << woffset
   io.dmem.wvalid := state === state_mem_write
   io.dmem.awvalid := state === state_mem_write
-  io.dmem.awaddr := alu_result >> 2.U << 2.U
-  io.dmem.wdata := dmem_write_data
+  io.dmem.awaddr := alu_result
+  io.dmem.awlen := 0.U
+  io.dmem.awsize := MuxLookup(csig.dmem_write_type, 0.U, Seq(
+    StValue.SB -> 0.U,
+    StValue.SH -> 1.U,
+    StValue.SW -> 2.U,
+  ))
+  io.dmem.awburst := 0.U
+  // TODO
+  io.dmem.awid := 0.U
+  io.dmem.wdata := input.reg2_data
   io.dmem.wstrb := MuxLookup(csig.dmem_write_type, "b0000".U, Seq(
     StValue.SW -> "b1111".U,
-    StValue.SH -> ("b11".U << alu_result(1,0)),
-    StValue.SB -> ("b1".U << alu_result(1,0)),
+    StValue.SH -> "b11".U,
+    StValue.SB -> "b1".U,
   ))
+  io.dmem.wlast := false.B
   io.dmem.bready := state === state_write_wait
 
   io.out.valid := state === state_wait_ready

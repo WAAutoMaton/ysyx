@@ -1,35 +1,47 @@
 import chisel3._
 import chisel3.util._
 
-class AxiLiteIO extends Bundle{
-  val araddr = Input(UInt(Constant.BitWidth))
-  val arvalid = Input(Bool())
-  val arready = Output(Bool())
-
-  val rdata = Output(UInt(Constant.BitWidth))
-  val rresp = Output(UInt(2.W))
-  val rvalid = Output(Bool())
-  val rready = Input(Bool())
-
+class Axi4IO extends Bundle{
   val awaddr = Input(UInt(Constant.BitWidth))
   val awvalid = Input(Bool())
   val awready = Output(Bool())
+  val awid = Input(UInt(4.W))
+  val awlen = Input(UInt(8.W))
+  val awsize = Input(UInt(3.W))
+  val awburst = Input(UInt(2.W))
 
+  val wready = Output(Bool())
+  val wvalid = Input(Bool())
   val wdata = Input(UInt(Constant.BitWidth))
   val wstrb = Input(UInt(4.W))
-  val wvalid = Input(Bool())
-  val wready = Output(Bool())
+  val wlast = Input(Bool())
 
-  val bresp = Output(UInt(2.W))
-  val bvalid = Output(Bool())
   val bready = Input(Bool())
+  val bvalid = Output(Bool())
+  val bresp = Output(UInt(2.W))
+  val bid =  Output(UInt(4.W))
+
+  val arready = Output(Bool())
+  val arvalid = Input(Bool())
+  val araddr = Input(UInt(Constant.BitWidth))
+  val arid = Input(UInt(4.W))
+  val arlen = Input(UInt(8.W))
+  val arsize = Input(UInt(3.W))
+  val arburst = Input(UInt(2.W))
+
+  val rready = Input(Bool())
+  val rvalid = Output(Bool())
+  val rresp = Output(UInt(2.W))
+  val rdata = Output(UInt(Constant.BitWidth))
+  val rlast = Output(Bool())
+  val rid = Output(UInt(4.W))
 }
 
 class AxiArbiter extends Module{
     val io = IO(new Bundle {
-      val in1 = new AxiLiteIO()
-      val in2 = new AxiLiteIO()
-      val out = Flipped(new AxiLiteIO())
+      val in1 = new Axi4IO()
+      val in2 = new Axi4IO()
+      val out = Flipped(new Axi4IO())
     })
 
   val state_r_idle :: state_r_master_1 :: state_r_master_2 :: Nil = Enum(3)
@@ -48,6 +60,13 @@ class AxiArbiter extends Module{
     state_r_master_1 -> io.in1.arvalid,
     state_r_master_2 -> io.in2.arvalid
   ))
+  io.out.arid := Mux(state_r === state_r_master_1, io.in1.arid, io.in2.arid)
+  io.out.arlen := Mux(state_r === state_r_master_1, io.in1.arlen, io.in2.arlen)
+  io.out.arsize := Mux(state_r === state_r_master_1, io.in1.arsize, io.in2.arsize)
+  io.out.arburst := MuxLookup(state_r, false.B, Seq(
+    state_r_master_1 -> io.in1.arburst,
+    state_r_master_2 -> io.in2.arburst,
+  ))
   io.in1.arready := state_r === state_r_master_1 && io.out.arready
   io.in2.arready := state_r === state_r_master_2 && io.out.arready
   io.in1.rdata := io.out.rdata
@@ -56,10 +75,14 @@ class AxiArbiter extends Module{
   io.in2.rresp := io.out.rresp
   io.in1.rvalid := io.out.rvalid && state_r === state_r_master_1
   io.in2.rvalid := io.out.rvalid && state_r === state_r_master_2
+  io.in1.rlast := io.out.rlast
+  io.in2.rlast := io.out.rlast
   io.out.rready := MuxLookup(state_r, false.B, Seq(
     state_r_master_1 -> io.in1.rready,
     state_r_master_2 -> io.in2.rready
   ))
+  io.in1.rid := io.out.rid
+  io.in2.rid := io.out.rid
 
   val state_w_idle :: state_w_master_1 :: state_w_master_2 :: Nil = Enum(3)
   val state_w = RegInit(state_w_idle)
@@ -90,8 +113,30 @@ class AxiArbiter extends Module{
   io.in2.bresp := io.out.bresp
   io.in1.bvalid := io.out.bvalid && state_w === state_w_master_1
   io.in2.bvalid := io.out.bvalid && state_w === state_w_master_2
+  io.in1.bid := io.out.bid
+  io.in2.bid := io.out.bid
+  io.out.awsize := MuxLookup(state_w, 0.U, Seq(
+    state_w_master_1 -> io.in1.awsize,
+    state_w_master_2 -> io.in2.awsize
+  ))
+  io.out.awlen := MuxLookup(state_w, 0.U, Seq(
+    state_w_master_1 -> io.in1.awlen,
+    state_w_master_2 -> io.in2.awlen
+  ))
+  io.out.awid := MuxLookup(state_w, 0.U, Seq(
+    state_w_master_1 -> io.in1.awid,
+    state_w_master_2 -> io.in2.awid
+  ))
+  io.out.awburst := MuxLookup(state_w, 0.U, Seq(
+    state_w_master_1 -> io.in1.awburst,
+    state_w_master_2 -> io.in2.awburst
+  ))
   io.out.bready := MuxLookup(state_w, false.B, Seq(
     state_w_master_1 -> io.in1.bready,
     state_w_master_2 -> io.in2.bready
+  ))
+  io.out.wlast := MuxLookup(state_w, false.B, Seq(
+    state_w_master_1 -> io.in1.wlast,
+    state_w_master_2 -> io.in2.wlast,
   ))
 }

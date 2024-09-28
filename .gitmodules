@@ -7,3 +7,6 @@
 [submodule "fceux-am"]
 	path = fceux-am
 	url = https://github.com/WAAutoMaton/ysyx-fceux-am
+[submodule "ysyxSoC"]
+	path = ysyxSoC
+	url = https://github.com/OSCPU/ysyxSoC

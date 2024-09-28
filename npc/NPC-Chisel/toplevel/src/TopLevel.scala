@@ -2,18 +2,19 @@ import chisel3._
 
 class TopLevel() extends Module {
   val io = IO(new Bundle {
-    val test_pc = Output(UInt(Constant.BitWidth))
-    val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
-    val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
-    val test_imem_en = Output(Bool())
+    val interrupt = Input(Bool())
+    val master = Flipped(new Axi4IO())
+    val slave = new Axi4IO()
+    //val test_pc = Output(UInt(Constant.BitWidth))
+    //val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
+    //val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
+    //val test_imem_en = Output(Bool())
   })
   //val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
 
-  val uart = Module(new UART())
   val clint = Module(new CLINT())
   val sram_arbiter = Module(new AxiArbiter())
-  val axi_xbar = Module(new AxiXbar(3, Array((0L,0xFFFFFFFFL),(0xa00003f8L,0xa00003fBL),(0xa0000048L,0xa000004FL))))
-  val sram = Module(new SRAM())
+  val axi_xbar = Module(new AxiXbar(2, Array((0L,0xFFFFFFFFL), (0xa0000048L,0xa000004FL))))
   val ifu = Module(new IFU())
   val idu = Module(new IDU())
   val exu = Module(new EXU())
@@ -35,16 +36,27 @@ class TopLevel() extends Module {
   exu.io.wb_en := wbu.io.wb_en
 
   axi_xbar.io.in <> sram_arbiter.io.out
-  sram.io <> axi_xbar.io.out(0)
-  clint.io <> axi_xbar.io.out(2)
-  uart.io <> axi_xbar.io.out(1)
+  io.master <> axi_xbar.io.out(0)
+  clint.io <> axi_xbar.io.out(1)
   sram_arbiter.io.in1 <> ifu.io.imem
   sram_arbiter.io.in2 <> wbu.io.dmem
 
-  io.test_imem_en := ifu.io.test_imem_en
-  io.test_regs := exu.io.test_regs
-  io.test_csr := exu.io.test_csr
-  io.test_pc := ifu.io.test_pc
+  io.slave.bresp := 0.U
+  io.slave.bvalid := false.B
+  io.slave.arready := false.B
+  io.slave.bid := 0.U
+  io.slave.rvalid := false.B
+  io.slave.rdata := 0.U
+  io.slave.rresp := 0.U
+  io.slave.awready := false.B
+  io.slave.rlast := false.B
+  io.slave.wready := false.B
+  io.slave.rid := 0.U
+
+  //io.test_imem_en := ifu.io.test_imem_en
+  //io.test_regs := exu.io.test_regs
+  //io.test_csr := exu.io.test_csr
+  //io.test_pc := ifu.io.test_pc
 
 }
 
