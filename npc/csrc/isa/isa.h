@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VTopLevel.h"
+#include "VysyxSoCFull.h"
 #include <verilated.h>
 #include "../common.h"
 #include "../config.h"
@@ -10,7 +10,7 @@ constexpr int MEM_SIZE=1024*1024*128;
 extern uint8_t mem[MEM_SIZE];
 
 extern const std::unique_ptr<VerilatedContext> contextp;
-extern const std::unique_ptr<VTopLevel> top;
+extern const std::unique_ptr<VysyxSoCFull> top;
 extern unsigned char* imem_en_ref;
 
 extern "C" struct riscv32_CPU_state{

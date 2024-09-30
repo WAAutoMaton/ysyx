@@ -1,4 +1,4 @@
-#include "VTopLevel.h"
+#include "VysyxSoCFull.h"
 #include "common.h"
 #include "difftest/difftest-def.h"
 #include "dpi.h"
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
   contextp->randReset(2);
   contextp->traceEverOn(true);
   contextp->commandArgs(argc, argv);
-  imem_en_ref = &top->io_test_imem_en;
+  //imem_en_ref = &top->io_test_imem_en;
   top->reset = 1;
   top->clock = 0;
   top->eval();
