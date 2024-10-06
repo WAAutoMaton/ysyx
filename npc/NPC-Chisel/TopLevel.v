@@ -2883,7 +2883,7 @@ module TopLevel(
   assign ifu_clock = clock;
   assign ifu_reset = reset;
   assign ifu_io_in_valid = start_tick | wbu_io_out_valid; // @[TopLevel.scala 26:25]
-  assign ifu_io_in_bits_pc = start_tick ? 32'h80000000 : wbu_io_out_bits_pc; // @[TopLevel.scala 27:27]
+  assign ifu_io_in_bits_pc = start_tick ? 32'h20000000 : wbu_io_out_bits_pc; // @[TopLevel.scala 27:27]
   assign ifu_io_out_ready = idu_io_in_ready; // @[TopLevel.scala 30:14]
   assign ifu_io_imem_arready = sram_arbiter_io_in1_arready; // @[TopLevel.scala 41:23]
   assign ifu_io_imem_rvalid = sram_arbiter_io_in1_rvalid; // @[TopLevel.scala 41:23]

@@ -11,7 +11,7 @@ gdb: sim
 sim:
 	$(call git_commit, "sim RTL") # DO NOT REMOVE THIS LINE!!!
 	verilator -cc --exe --build -x-assign fast --trace --assert --coverage -CFLAGS -ggdb  -LDFLAGS -ggdb -j 8 \
-	--timescale "1ns/1ns" --no-timing --top-module ysyxSoCFull \
+	--timescale "1ns/1ns" --no-timing --top-module ysyxSoCFull --autoflush \
 	-I../ysyxSoC/perip/uart16550/rtl -I../ysyxSoC/perip/spi/rtl \
 	csrc/main.cpp csrc/dpi.cpp csrc/sdb/sdb.cpp csrc/sdb/watchpoint.cpp csrc/sdb/expr.cpp \
 	csrc/isa/isa.cpp csrc/common.cpp csrc/utils/disasm.cpp \

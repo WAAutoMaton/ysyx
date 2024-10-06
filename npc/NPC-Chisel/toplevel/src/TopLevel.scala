@@ -24,7 +24,7 @@ class TopLevel() extends Module {
   start_tick := false.B
 
   ifu.io.in.valid := Mux(start_tick, true.B, wbu.io.out.valid)
-  ifu.io.in.bits.pc := Mux(start_tick, 0x80000000L.U, wbu.io.out.bits.pc)
+  ifu.io.in.bits.pc := Mux(start_tick, 0x20000000L.U, wbu.io.out.bits.pc)
   wbu.io.out.ready := ifu.io.in.ready
 
   ifu.io.out <> idu.io.in

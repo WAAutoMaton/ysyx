@@ -11,7 +11,11 @@
 #include <verilated.h>
 
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
-extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { 
+  //*data = 0b00000000000100000000000001110011;
+  *data = ((uint32_t*)mem)[(addr-0x20000000L)/4+4];
+  //printf("MROM READ, address: %x, data: %x\n", addr, *data);
+}
 
 int cycle_cnt;
 
