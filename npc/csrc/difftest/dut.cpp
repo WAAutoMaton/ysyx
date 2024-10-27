@@ -58,7 +58,7 @@ void difftest_skip_dut(int nr_ref, int nr_dut) {
   }
 }
 
-void init_difftest(const char *ref_so_file, long img_size, int port) {
+void init_difftest(const char *ref_so_file, long img_size, const uint8_t *mrom, int port) {
   assert(ref_so_file != NULL);
 
   void *handle;
@@ -77,7 +77,7 @@ void init_difftest(const char *ref_so_file, long img_size, int port) {
   ref_difftest_raise_intr = decltype(ref_difftest_raise_intr)(dlsym(handle, "difftest_raise_intr"));
   assert(ref_difftest_raise_intr);
 
-  void (*ref_difftest_init)(int) = decltype(ref_difftest_init)(dlsym(handle, "difftest_init"));
+  void (*ref_difftest_init)(int, const uint8_t*, int) = decltype(ref_difftest_init)(dlsym(handle, "difftest_init"));
   assert(ref_difftest_init);
 
   Log("Differential testing: %s", ANSI_FMT("ON", ANSI_FG_GREEN));
@@ -85,9 +85,9 @@ void init_difftest(const char *ref_so_file, long img_size, int port) {
       "This will help you a lot for debugging, but also significantly reduce the performance. "
       "If it is not necessary, you can turn it off in menuconfig.", ref_so_file);
 
-  ref_difftest_init(port);
+  ref_difftest_init(port, mrom, img_size);
   const uint32_t RESET_VECTOR = CONFIG_MBASE;
-  ref_difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
+  //ref_difftest_memcpy(RESET_VECTOR, guest_to_host(RESET_VECTOR), img_size, DIFFTEST_TO_REF);
   auto cpu = get_current_cpu_state();
   ref_difftest_regcpy(&cpu, DIFFTEST_TO_REF);
 }

@@ -13,7 +13,7 @@
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
 extern "C" void mrom_read(int32_t addr, int32_t *data) { 
   //*data = 0b00000000000100000000000001110011;
-  *data = ((uint32_t*)mem)[(addr-0x20000000L)/4+4];
+  *data = ((uint32_t*)mem)[(addr-0x20000000L)/4];
   //printf("MROM READ, address: %x, data: %x\n", addr, *data);
 }
 
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   init_isa();
   init_sdb(elf);
 #ifdef CONFIG_DIFFTEST
-  init_difftest(difftest_ref_so_file, img_size, 0);
+  init_difftest(difftest_ref_so_file, img_size, mem, 0);
 #endif
 
   get_time();

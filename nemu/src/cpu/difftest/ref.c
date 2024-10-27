@@ -43,9 +43,9 @@ __EXPORT void difftest_raise_intr(word_t NO) {
   assert(0);
 }
 
-__EXPORT void difftest_init(int port) {
-  void init_mem();
-  init_mem();
+__EXPORT void difftest_init(int port, const uint8_t *mrom, int mrom_size) {
+  void init_mem(const uint8_t*, int);
+  init_mem(mrom, mrom_size);
   /* Perform ISA dependent initialization. */
   init_isa();
 }
