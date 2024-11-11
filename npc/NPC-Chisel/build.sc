@@ -61,7 +61,7 @@ trait ScalacOptions extends ScalaModule {
 // Final object definition name matches the sources/tests directory
 object toplevel extends ScalaModule with BaseProject with ScalacOptions {
   // This is the name of your main class (instantiated as `object x extends App`)
-  def mainClass = Some("Toplevel")
+  def mainClass = Some("TopLevel")
   // Matches your project directory where sources and tests are placed
   def projectName = "toplevel"
 }

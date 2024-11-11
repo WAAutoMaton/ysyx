@@ -18,7 +18,7 @@ extern "C" void mrom_read(int32_t addr, int32_t *data) {
 }
 
 int cycle_cnt;
-
+extern uint32_t *reg_ref[32];
 void cpu_exec(int n) {
   if (n < 0) {
     n = 0x3fffffff;
@@ -34,12 +34,12 @@ void cpu_exec(int n) {
     top->clock = 1;
     top->eval();
     if (is_ebreak) {
-      if (ebreak_code==1) {
+      if (*reg_ref[1]==0) {
         npc_status = NPC_STATUS_QUIT;
         printf("At %d cycle, ebreak called. Exited.\n", cycle_cnt);
       } else {
         npc_status = NPC_STATUS_FAILED;
-        printf("At %d cycle, ebreak called with error code %d. Exited.\n", cycle_cnt, int(ebreak_code));
+        printf("At %d cycle, ebreak called with error code %d. Exited.\n", cycle_cnt, int(*reg_ref[1]));
       }
       break;
     }

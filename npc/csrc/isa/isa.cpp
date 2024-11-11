@@ -18,7 +18,6 @@ unsigned char *imem_en_ref = nullptr;
 
 void init_isa()
 {
-  /*
     reg_ref[0] = &top->io_test_regs_0;
     reg_ref[1] = &top->io_test_regs_1;
     reg_ref[2] = &top->io_test_regs_2;
@@ -51,13 +50,12 @@ void init_isa()
     reg_ref[29] = &top->io_test_regs_29;
     reg_ref[30] = &top->io_test_regs_30;
     reg_ref[31] = &top->io_test_regs_31;
-    */
 }
 
 void isa_reg_display()
 {
     puts("Registers:");
-    //printf(" PC: 0x%08x\n", top->io_test_pc);
+    printf(" PC: 0x%08x\n", top->io_test_pc);
     for(int i = 0; i < 32; i++) {
         printf("%3s: 0x%08x %12d\n", regs[i], *reg_ref[i], (int)*reg_ref[i]);
     }
@@ -135,13 +133,11 @@ CPU_state get_current_cpu_state()
     for(int i = 0; i < 32; i++) {
         cpu.gpr[i] = *reg_ref[i];
     }
-    /*
     cpu.pc = top->io_test_pc;
     cpu.mstatus = top->io_test_csr_0;
     cpu.mepc = top->io_test_csr_1;
     cpu.mcause = top->io_test_csr_2;
     cpu.mtvec = top->io_test_csr_3;
-    */
     return cpu;
 }
 

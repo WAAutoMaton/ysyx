@@ -27,6 +27,7 @@ void putch(char ch) {
 }
 
 void halt(int code) {
+  __asm__("add x1, x0, %0\n" : : "r"(code));
   __asm__("ebreak");
   while (1);
 }

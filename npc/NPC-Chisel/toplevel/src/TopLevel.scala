@@ -5,10 +5,10 @@ class TopLevel() extends Module {
     val interrupt = Input(Bool())
     val master = Flipped(new Axi4IO())
     val slave = new Axi4IO()
-    //val test_pc = Output(UInt(Constant.BitWidth))
-    //val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
-    //val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
-    //val test_imem_en = Output(Bool())
+    val test_pc = Output(UInt(Constant.BitWidth))
+    val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
+    val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
+    val test_imem_en = Output(Bool())
   })
   //val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
 
@@ -53,10 +53,10 @@ class TopLevel() extends Module {
   io.slave.wready := false.B
   io.slave.rid := 0.U
 
-  //io.test_imem_en := ifu.io.test_imem_en
-  //io.test_regs := exu.io.test_regs
-  //io.test_csr := exu.io.test_csr
-  //io.test_pc := ifu.io.test_pc
+  io.test_imem_en := ifu.io.test_imem_en
+  io.test_regs := exu.io.test_regs
+  io.test_csr := exu.io.test_csr
+  io.test_pc := ifu.io.test_pc
 
 }
 
