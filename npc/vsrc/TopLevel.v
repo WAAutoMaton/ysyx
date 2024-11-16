@@ -1,1 +1,1 @@
-../NPC-Chisel/TopLevel.v
+../NPC-Chisel/generated/TopLevel.v

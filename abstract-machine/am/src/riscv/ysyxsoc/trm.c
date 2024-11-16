@@ -32,7 +32,22 @@ void halt(int code) {
   while (1);
 }
 
+void bootloader() {
+  extern char _data_start, _data_end, _m_data_start;
+  extern char _bss_start, _bss_end;
+  //halt(&_data_end - &_data_start + 1000);
+
+  char* p = &_m_data_start;
+  for(char* i=&_data_start; i<&_data_end; i++, p++) {
+    *i = *p;
+  }
+  for(char* i=&_bss_start; i<&_bss_end; i++) {
+    *i = 0;
+  }
+}
+
 void _trm_init() {
+  bootloader();
   int ret = main(mainargs);
   halt(ret);
 }

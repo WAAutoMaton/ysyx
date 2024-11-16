@@ -51,6 +51,7 @@ class WBU extends Module{
   // 内存访问需要4字节对齐，非4字节对齐的 lb/lh 指令需要对结果进行偏移
   val roffset = (alu_result(1,0)<<3.U)
   val shift_rdata = Wire(UInt(Constant.BitWidth))
+  shift_rdata := io.dmem.rdata >> roffset
   io.wb_addr := input.inst(11, 7)
   io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && io.dmem.rvalid && io.dmem.rready)
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
