@@ -9,4 +9,4 @@
 	url = https://github.com/WAAutoMaton/ysyx-fceux-am
 [submodule "ysyxSoC"]
 	path = ysyxSoC
-	url = https://github.com/OSCPU/ysyxSoC
+	url = https://github.com/WAAutoMaton/ysyxSoC
