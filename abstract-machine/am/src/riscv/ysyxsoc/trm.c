@@ -19,11 +19,36 @@ Area heap = RANGE(&_heap_start, HEAP_END);
 #endif
 static const char mainargs[] = MAINARGS;
 
+#define UART_DIV  8333
 #define UART_BASE 0x10000000L
-#define UART_TX   0
+#define UART_TX   (UART_BASE + 0)
+#define UART_LCR  (UART_BASE + 3)
+#define UART_DLB1 (UART_BASE + 0)
+#define UART_DLB2 (UART_BASE + 1)
+#define UART_LSR  (UART_BASE + 5)
+#define UART_FCR  (UART_BASE + 2)
+#define UART_IIR  (UART_BASE + 2)
+
+void init_uart() {
+  //outb(UART_FCR, 0x06);
+  //inb(UART_IIR);
+  // begin setting divisor latch
+  outb(UART_LCR, 0b10000011);
+  // set divisor latch
+  outb(UART_DLB2, UART_DIV >> 8);
+  outb(UART_DLB1, UART_DIV & 0xff);
+  // end setting divisor latch
+  outb(UART_LCR, 0b00000011);
+}
 
 void putch(char ch) {
-  *(volatile char *)(UART_BASE + UART_TX) = ch;
+  /*uint8_t t=0;
+  for(int i=0; ((t>>5)&1)==0; i++) {
+    t = inb(UART_LSR);
+  }
+  */
+  uint8_t t = inb(UART_LSR);
+  outb(UART_TX, t+32);
 }
 
 void halt(int code) {
@@ -47,6 +72,7 @@ void bootloader() {
 }
 
 void _trm_init() {
+  init_uart();
   bootloader();
   int ret = main(mainargs);
   halt(ret);
