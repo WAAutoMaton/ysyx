@@ -19,7 +19,7 @@ Area heap = RANGE(&_heap_start, HEAP_END);
 #endif
 static const char mainargs[] = MAINARGS;
 
-#define UART_DIV  8333
+#define UART_DIV  32
 #define UART_BASE 0x10000000L
 #define UART_TX   (UART_BASE + 0)
 #define UART_LCR  (UART_BASE + 3)
@@ -42,13 +42,11 @@ void init_uart() {
 }
 
 void putch(char ch) {
-  /*uint8_t t=0;
-  for(int i=0; ((t>>5)&1)==0; i++) {
+  uint8_t t=0;
+  do{ 
     t = inb(UART_LSR);
-  }
-  */
-  uint8_t t = inb(UART_LSR);
-  outb(UART_TX, t+32);
+  } while(((t>>5)&1) == 0);
+  outb(UART_TX, ch);
 }
 
 void halt(int code) {

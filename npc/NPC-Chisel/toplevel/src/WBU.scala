@@ -50,14 +50,32 @@ class WBU extends Module{
 
   io.wb_addr := input.inst(11, 7)
   io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && io.dmem.rvalid && io.dmem.rready)
+  val byte_offset = alu_result(1, 0)
+
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu_result,
-    WBSelV.PC4 -> (pc+4.U),
+    WBSelV.PC4 -> (pc + 4.U),
     WBSelV.LW -> io.dmem.rdata,
-    WBSelV.LBU -> io.dmem.rdata(7, 0),
-    WBSelV.LHU -> io.dmem.rdata(15, 0),
-    WBSelV.LB -> io.dmem.rdata(7, 0).asSInt.pad(32).asUInt,
-    WBSelV.LH -> io.dmem.rdata(15, 0).asSInt.pad(32).asUInt,
+    WBSelV.LBU -> MuxLookup(byte_offset, io.dmem.rdata(7, 0), Seq(
+      "b00".U -> io.dmem.rdata(7, 0),
+      "b01".U -> io.dmem.rdata(15, 8),
+      "b10".U -> io.dmem.rdata(23, 16),
+      "b11".U -> io.dmem.rdata(31, 24)
+    )),
+    WBSelV.LHU -> MuxLookup(alu_result(1), io.dmem.rdata(15, 0), Seq(
+      0.U -> io.dmem.rdata(15, 0),
+      1.U -> io.dmem.rdata(31, 16)
+    )),
+    WBSelV.LB -> MuxLookup(byte_offset, io.dmem.rdata(7, 0).asSInt.pad(32).asUInt, Seq(
+      "b00".U -> io.dmem.rdata(7, 0).asSInt.pad(32).asUInt,
+      "b01".U -> io.dmem.rdata(15, 8).asSInt.pad(32).asUInt,
+      "b10".U -> io.dmem.rdata(23, 16).asSInt.pad(32).asUInt,
+      "b11".U -> io.dmem.rdata(31, 24).asSInt.pad(32).asUInt
+    )),
+    WBSelV.LH -> MuxLookup(alu_result(1), io.dmem.rdata(15, 0).asSInt.pad(32).asUInt, Seq(
+      0.U -> io.dmem.rdata(15, 0).asSInt.pad(32).asUInt,
+      1.U -> io.dmem.rdata(31, 16).asSInt.pad(32).asUInt
+    )),
     WBSelV.CSR -> csr_rdata,
   ))
 
@@ -88,11 +106,33 @@ class WBU extends Module{
   io.dmem.awburst := 0.U
   // TODO
   io.dmem.awid := 0.U
-  io.dmem.wdata := input.reg2_data
+
   io.dmem.wstrb := MuxLookup(csig.dmem_write_type, "b0000".U, Seq(
     StValue.SW -> "b1111".U,
-    StValue.SH -> "b11".U,
-    StValue.SB -> "b1".U,
+    StValue.SH -> MuxLookup(alu_result(1), "b0011".U, Seq(
+      0.U -> "b0011".U,
+      1.U -> "b1100".U
+    )),
+    StValue.SB -> MuxLookup(byte_offset, "b0001".U, Seq(
+      "b00".U -> "b0001".U,
+      "b01".U -> "b0010".U,
+      "b10".U -> "b0100".U,
+      "b11".U -> "b1000".U
+    ))
+  ))
+  // Also need to adjust the write data based on the byte offset
+  io.dmem.wdata := MuxLookup(csig.dmem_write_type, input.reg2_data, Seq(
+    StValue.SW -> input.reg2_data,
+    StValue.SH -> MuxLookup(alu_result(1), input.reg2_data, Seq(
+      0.U -> input.reg2_data,
+      1.U -> (input.reg2_data << 16.U)
+    )),
+    StValue.SB -> MuxLookup(byte_offset, input.reg2_data, Seq(
+      "b00".U -> input.reg2_data,
+      "b01".U -> (input.reg2_data << 8.U),
+      "b10".U -> (input.reg2_data << 16.U),
+      "b11".U -> (input.reg2_data << 24.U)
+    ))
   ))
   io.dmem.wlast := false.B
   io.dmem.bready := state === state_write_wait
