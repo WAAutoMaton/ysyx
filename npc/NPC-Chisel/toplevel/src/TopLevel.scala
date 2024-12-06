@@ -19,6 +19,7 @@ class TopLevel() extends Module {
   val idu = Module(new IDU())
   val exu = Module(new EXU())
   val wbu = Module(new WBU())
+  val difftest = Module(new DiffTestSignal())
 
   val start_tick = RegInit(Bool(), true.B)
   start_tick := false.B
@@ -57,6 +58,11 @@ class TopLevel() extends Module {
   io.test_regs := exu.io.test_regs
   io.test_csr := exu.io.test_csr
   io.test_pc := ifu.io.test_pc
+
+  difftest.io.enable := ifu.io.test_imem_en
+  difftest.io.regs := exu.io.test_regs
+  difftest.io.csr := exu.io.test_csr
+  difftest.io.pc := ifu.io.test_pc
 
 }
 
