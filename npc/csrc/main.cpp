@@ -10,7 +10,22 @@
 #include <stdlib.h>
 #include <verilated.h>
 
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+uint8_t *flash = NULL;
+
+extern "C" void init_flash(){
+  flash = (uint8_t *)malloc(FLASH_SIZE);
+  assert(flash);
+  memset(flash, 0, FLASH_SIZE);
+  for(int i=0; i<100; i++) {
+    flash[i]=i*3;
+  }
+  Log("flash memory area [" FMT_PADDR ", " FMT_PADDR "]", FLASH_BASE, FLASH_BASE+FLASH_SIZE);
+};
+extern "C" void flash_read(int32_t addr, int32_t *data) { 
+  int align_addr = addr + FLASH_BASE;
+  *data = ((uint32_t*)flash)[addr/4];
+  fprintf(stderr, "%d %d\n",addr, *data);
+}
 extern "C" void mrom_read(int32_t addr, int32_t *data) { 
   //*data = 0b00000000000100000000000001110011;
   *data = ((uint32_t*)mem)[(addr-0x20000000L)/4];
@@ -87,7 +102,7 @@ int main(int argc, char **argv) {
 #ifdef CONFIG_DIFFTEST
   init_difftest(difftest_ref_so_file, img_size, mem, 0);
 #endif
-
+  init_flash();
   get_time();
   sdb_mainloop();
 

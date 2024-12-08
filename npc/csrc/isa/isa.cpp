@@ -124,11 +124,25 @@ void paddr_write(paddr_t addr, int wmask, word_t data)
     }
 }
 
-uint8_t* guest_to_host(paddr_t paddr) { return mem + paddr - CONFIG_MBASE; }
+static inline bool in_pmem(paddr_t addr) {
+  return addr - CONFIG_MBASE <= CONFIG_MSIZE && addr >= CONFIG_MBASE;
+}
+uint8_t* guest_to_host(paddr_t paddr) {   
+  if (in_pmem(paddr)) {
+    return mem + paddr - CONFIG_MBASE;
+  }
+  else {
+    Log("paddr = " FMT_PADDR" is out of definition", paddr);
+    return NULL;
+  }
+}
 paddr_t host_to_guest(uint8_t *haddr) { return haddr - mem + CONFIG_MBASE; }
+
+CPU_state current_cpu_state;
 
 CPU_state get_current_cpu_state()
 {
+  return current_cpu_state;
     CPU_state cpu;
     for(int i = 0; i < 32; i++) {
         cpu.gpr[i] = *reg_ref[i];

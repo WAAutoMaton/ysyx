@@ -41,11 +41,13 @@ extern "C" {
 		raddr = raddr & ~0x3u;
 		word_t data= paddr_read(raddr, 4);
 		//Log("pmem_read: raddr=0x%x, data=0x%x\n", raddr, data);
+		/*
 #ifdef CONFIG_TRACE
 		if (*imem_en_ref) {
 			trace_exec(raddr, data);
 		}
 #endif
+*/
 		return data;
 	}
 	void pmem_write(int waddr, int wdata, char wmask) {
@@ -82,6 +84,48 @@ extern "C" {
 		 int csr_0,  int csr_1,  int csr_2,  int csr_3
 	)
 	{
+		if (pc==0) return;
+		auto &cpu = current_cpu_state;
+		cpu.gpr[0] = regs_0;
+		cpu.gpr[1] = regs_1;
+		cpu.gpr[2] = regs_2;
+		cpu.gpr[3] = regs_3;
+		cpu.gpr[4] = regs_4;
+		cpu.gpr[5] = regs_5;
+		cpu.gpr[6] = regs_6;
+		cpu.gpr[7] = regs_7;
+		cpu.gpr[8] = regs_8;
+		cpu.gpr[9] = regs_9;
+		cpu.gpr[10] = regs_10;
+		cpu.gpr[11] = regs_11;
+		cpu.gpr[12] = regs_12;
+		cpu.gpr[13] = regs_13;
+		cpu.gpr[14] = regs_14;
+		cpu.gpr[15] = regs_15;
+		cpu.gpr[16] = regs_16;
+		cpu.gpr[17] = regs_17;
+		cpu.gpr[18] = regs_18;
+		cpu.gpr[19] = regs_19;
+		cpu.gpr[20] = regs_20;
+		cpu.gpr[21] = regs_21;
+		cpu.gpr[22] = regs_22;
+		cpu.gpr[23] = regs_23;
+		cpu.gpr[24] = regs_24;
+		cpu.gpr[25] = regs_25;
+		cpu.gpr[26] = regs_26;
+		cpu.gpr[27] = regs_27;
+		cpu.gpr[28] = regs_28;
+		cpu.gpr[29] = regs_29;
+		cpu.gpr[30] = regs_30;
+		cpu.gpr[31] = regs_31;
+		cpu.pc = pc;
+		cpu.mstatus = csr_0;
+		cpu.mepc = csr_1;
+		cpu.mcause = csr_2;
+		cpu.mtvec = csr_3;
 
+#ifdef CONFIG_TRACE
+		trace_exec(pc, 0);
+#endif
 	}
 }

@@ -24,6 +24,8 @@ extern "C" struct riscv32_CPU_state{
 
 using CPU_state = riscv32_CPU_state;
 
+extern CPU_state current_cpu_state;
+
 
 void isa_reg_display();
 void init_isa();
