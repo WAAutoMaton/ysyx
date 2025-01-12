@@ -11,7 +11,9 @@
 #include <verilated.h>
 
 uint8_t *flash = NULL;
-
+uint8_t *psram = NULL;
+uint8_t *sram = NULL;
+uint8_t *sdram = NULL;
 extern "C" void init_flash(){
   flash = (uint8_t *)malloc(FLASH_SIZE);
   assert(flash);
@@ -21,17 +23,38 @@ extern "C" void init_flash(){
   }
   Log("flash memory area [" FMT_PADDR ", " FMT_PADDR "]", FLASH_BASE, FLASH_BASE+FLASH_SIZE);
 };
+
+extern "C" void init_sram() {
+  sram = (uint8_t *)malloc(SRAM_SIZE);
+  assert(sram);
+  memset(sram, 0, SRAM_SIZE);
+  Log("sram memory area [" FMT_PADDR ", " FMT_PADDR "]", SRAM_BASE, SRAM_BASE+SRAM_SIZE);
+};
+
+extern "C" void init_sdram() {
+  sdram = (uint8_t *)malloc(SDRAM_SIZE);
+  assert(sdram);
+  memset(sdram, 0, SDRAM_SIZE);
+  Log("sdram memory area [" FMT_PADDR ", " FMT_PADDR "]", SDRAM_BASE, SDRAM_BASE+SDRAM_SIZE);
+};
+
+
+extern "C" void init_psram() {
+  psram = (uint8_t *)malloc(PSRAM_SIZE);
+  assert(psram);
+  memset(psram, 0, PSRAM_SIZE);
+  Log("psram memory area [" FMT_PADDR ", " FMT_PADDR "]", PSRAM_BASE, PSRAM_BASE+PSRAM_SIZE);
+}
 extern "C" void flash_read(int32_t addr, int32_t *data) { 
   int align_addr = addr + FLASH_BASE;
   *data = ((uint32_t*)flash)[addr/4];
-  fprintf(stderr, "%d %d\n",addr, *data);
+  Log("%d %d\n",addr, *data);
 }
+
 extern "C" void mrom_read(int32_t addr, int32_t *data) { 
   //*data = 0b00000000000100000000000001110011;
   *data = ((uint32_t*)mem)[(addr-0x20000000L)/4];
-  //printf("MROM READ, address: %x, data: %x\n", addr, *data);
 }
-
 int cycle_cnt;
 extern uint32_t *reg_ref[32];
 void cpu_exec(int n) {
@@ -102,7 +125,10 @@ int main(int argc, char **argv) {
 #ifdef CONFIG_DIFFTEST
   init_difftest(difftest_ref_so_file, img_size, mem, 0);
 #endif
+  init_psram();
   init_flash();
+  init_sram();
+  init_sdram();
   get_time();
   sdb_mainloop();
 

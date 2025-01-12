@@ -25,8 +25,42 @@ static uint8_t pmem[CONFIG_MSIZE] PG_ALIGN = {};
 #endif
 static uint8_t mrom[1024*8] PG_ALIGN = {};
 
-uint8_t* guest_to_host(paddr_t paddr) { return pmem + paddr - CONFIG_MBASE; }
-paddr_t host_to_guest(uint8_t *haddr) { return haddr - pmem + CONFIG_MBASE; }
+uint8_t* guest_to_host(paddr_t paddr) { 
+  if (in_flash(paddr)) {
+    return flash + paddr - FLASH_BASE;
+  }
+  else if (in_psram(paddr)) {
+    return psram + paddr - PSRAM_BASE;
+  }
+  else if (in_mrom(paddr)) {
+    return mrom + paddr - MROM_BASE;
+  }
+  else if (in_sram(paddr)) {
+    return sram + paddr - SRAM_BASE;
+  }
+  else if (in_sdram(paddr)) {
+    return sdram + paddr - SDRAM_BASE;
+  }
+  return pmem + paddr - CONFIG_MBASE; 
+}
+paddr_t host_to_guest(uint8_t *haddr) { 
+  if (phy_in_mrom(haddr)) {
+    return haddr - mrom + MROM_BASE;
+  }
+  else if (phy_in_sram(haddr)) {
+    return haddr - sram + SRAM_BASE;
+  }
+  else if (phy_in_sdram(haddr)) {
+    return haddr - sdram + SDRAM_BASE;
+  }
+  else if (phy_in_flash(haddr)) {
+    return haddr - flash + FLASH_BASE;
+  }
+  else if (phy_in_psram(haddr)) {
+    return haddr - psram + PSRAM_BASE;
+  }
+  return haddr - pmem + CONFIG_MBASE; 
+}
 
 static word_t pmem_read(paddr_t addr, int len) {
   if (addr >= 0x20000000 && addr <= 0x20000fff) {

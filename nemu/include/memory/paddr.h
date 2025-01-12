@@ -30,7 +30,39 @@ paddr_t host_to_guest(uint8_t *haddr);
 static inline bool in_pmem(paddr_t addr) {
   return addr - CONFIG_MBASE < CONFIG_MSIZE;
 }
-
+static inline bool in_flash(paddr_t addr) {
+  return addr - FLASH_BASE < FLASH_SIZE;
+}
+static inline bool in_psram(paddr_t addr) {
+  return addr - PSRAM_BASE < PSRAM_SIZE;
+}
+static inline bool in_mrom(paddr_t addr) {
+  return addr - MROM_BASE < MROM_SIZE;
+}
+static inline bool in_sram(paddr_t addr) {
+  return addr - SRAM_BASE < SRAM_SIZE;
+}
+static inline bool in_sdram(paddr_t addr) {
+  return addr - SDRAM_BASE < SDRAM_SIZE;
+}
+static inline bool phy_in_pmem(paddr_t addr) {
+  return addr - pmem < CONFIG_MSIZE && addr - pmem>= 0;
+}
+static inline bool phy_in_flash(paddr_t addr) {
+  return addr - flash < FLASH_SIZE && addr -flash >=0;
+}
+static inline bool phy_in_psram(paddr_t addr) {
+  return addr - psram < PSRAM_SIZE && addr - psram >= 0;
+}
+static inline bool phy_in_mrom(paddr_t addr) {
+  return addr - mrom < MROM_SIZE && addr - mrom >= 0;
+}
+static inline bool phy_in_sram(paddr_t addr) {
+  return addr - sram < SRAM_SIZE && addr - sram >= 0;
+}
+static inline bool phy_in_sdram(paddr_t addr) {
+  return addr - sdram < SDRAM_SIZE && addr - sdram >= 0;
+}
 word_t paddr_read(paddr_t addr, int len);
 void paddr_write(paddr_t addr, int len, word_t data);
 
