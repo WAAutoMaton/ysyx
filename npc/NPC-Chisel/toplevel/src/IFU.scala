@@ -18,15 +18,18 @@ class IFU extends Module{
     val test_pc = Output(UInt(Constant.BitWidth))
     val imem = Flipped(new Axi4IO())
   })
-  private val state_idle :: state_read :: state_read_wait :: state_wait_ready :: Nil = Enum(4)
+  // TODO: state_load 是为了处理 io.in.bits.pc -> pc -> io.imem.araddr 的时序问题的，有空改掉.
+  // 其实可能没有问题
+  private val state_idle :: state_load :: state_read :: state_read_wait :: state_wait_ready :: Nil = Enum(5)
   val state = RegInit(state_idle)
   state := MuxLookup(state, state_idle, List(
-    state_idle -> Mux(io.in.valid, state_read, state_idle),
+    state_idle -> Mux(io.in.valid, state_load, state_idle),
+    state_load -> state_read,
     state_read -> Mux(io.imem.arready, state_read_wait, state_read),
     state_read_wait -> Mux(io.imem.rvalid, state_wait_ready, state_read_wait),
     state_wait_ready -> Mux(io.out.ready, state_idle, state_wait_ready)
   ))
-  val pc = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
+  val pc = RegInit(UInt(Constant.BitWidth), 0x50000000L.U)
   val inst = RegInit(UInt(Constant.InstLen), 0.U)
   io.imem.araddr := pc
   io.imem.arvalid := state === state_read
@@ -39,6 +42,16 @@ class IFU extends Module{
 
   pc := Mux(io.in.valid && io.in.ready, io.in.bits.pc, pc)
   inst := Mux(io.imem.rvalid && io.imem.rready, io.imem.rdata, inst)
+
+  /*
+  val printer = Module(new Print())
+  printer.io.enable := (io.imem.rvalid && io.imem.rready) 
+  printer.io.data := io.imem.rdata
+
+  val state_prev = RegNext(state)
+  val printer2 = Module(new Print())
+  printer2.io.enable := (state_prev =/= state_read && state===state_read)
+  printer2.io.data := io.imem.araddr + "h10000".U*/
 
   io.imem.wvalid := false.B
   io.imem.awvalid := false.B

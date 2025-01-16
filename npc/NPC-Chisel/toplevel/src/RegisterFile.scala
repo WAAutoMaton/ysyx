@@ -25,20 +25,25 @@ class RegisterFile extends Module {
     val csr_ecall_ret = Output(UInt(Constant.BitWidth))
     val csr_mret_enable = Input(Bool())
     val csr_mret_ret = Output(UInt(Constant.BitWidth))
-    val test_csr_out = Output(Vec(4, UInt(Constant.BitWidth)))
+    val test_csr_out = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
   })
   private val registers = RegInit(VecInit(Seq.fill(Constant.RegisterNum)(0.U(Constant.BitWidth))))
   private val csr = RegInit(VecInit(Seq.fill(Constant.CSRNum)(0.U(Constant.BitWidth))))
+  csr(4) := 0x79737978.U
+  csr(5) := 23060255.U
   when(io.write_enable && io.write_address=/=0.U){
     registers(io.write_address) := io.write_data
   }
-  private val csr_id = Wire(UInt(3.W))
-  csr_id := MuxLookup(io.csr_addr, 7.U, Seq(
+  private val csr_id = Wire(UInt(5.W))
+  csr_id := MuxLookup(io.csr_addr(11,0), 7.U, Seq(
     0x300.U -> 0.U, // mstatus
     0x341.U -> 1.U, // mepc
     0x342.U -> 2.U, // mcause
     0x305.U -> 3.U, // mtvec
+    0xf11.U -> 4.U, // mvendorid
+    0xf12.U -> 5.U, // marchid
   ))
+
   io.csr_rdata := Mux(io.csr_rs_enable || io.csr_rw_enable, csr(csr_id), 0.U)
   io.csr_ecall_ret := csr(3)
   io.csr_mret_ret := csr(1)

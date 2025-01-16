@@ -52,6 +52,7 @@ class WBU extends Module{
   io.wb_en := (state===state_execute && csig.WB_sel=/=WBSelV.NO_WB) || (state === state_read_wait && io.dmem.rvalid && io.dmem.rready)
   val byte_offset = alu_result(1, 0)
 
+
   io.wb_data := MuxLookup(csig.WB_sel, 0.U, Seq(
     WBSelV.ALU -> alu_result,
     WBSelV.PC4 -> (pc + 4.U),

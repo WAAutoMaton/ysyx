@@ -8,7 +8,7 @@ import "DPI-C" function void difftest_signal_up(
     input int regs_20, input int regs_21, input int regs_22, input int regs_23,
     input int regs_24, input int regs_25, input int regs_26, input int regs_27,
     input int regs_28, input int regs_29, input int regs_30, input int regs_31,
-    input int csr_0, input int csr_1, input int csr_2, input int csr_3
+    input int csr_0, input int csr_1, input int csr_2, input int csr_3, input int csr_4, input int csr_5
 );
 module DiffTestSignal(
   input         enable,
@@ -48,7 +48,9 @@ module DiffTestSignal(
   input  [31:0] csr_0,
   input  [31:0] csr_1,
   input  [31:0] csr_2,
-  input  [31:0] csr_3
+  input  [31:0] csr_3,
+  input  [31:0] csr_4,
+  input  [31:0] csr_5
 );
 	always @(*) begin
 	  if (enable) begin 
@@ -89,7 +91,9 @@ module DiffTestSignal(
 			csr_0,
 			csr_1,
 			csr_2,
-			csr_3
+			csr_3,
+			csr_4,
+			csr_5
 		);
 	  end
 	end

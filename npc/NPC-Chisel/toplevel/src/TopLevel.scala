@@ -5,10 +5,6 @@ class TopLevel() extends Module {
     val interrupt = Input(Bool())
     val master = Flipped(new Axi4IO())
     val slave = new Axi4IO()
-    val test_pc = Output(UInt(Constant.BitWidth))
-    val test_regs = Output(Vec(Constant.RegisterNum, UInt(Constant.BitWidth)))
-    val test_csr = Output(Vec(Constant.CSRNum, UInt(Constant.BitWidth)))
-    val test_imem_en = Output(Bool())
   })
   //val PC = RegInit(UInt(Constant.BitWidth), 0x80000000L.U)
 
@@ -25,7 +21,7 @@ class TopLevel() extends Module {
   start_tick := false.B
 
   ifu.io.in.valid := Mux(start_tick, true.B, wbu.io.out.valid)
-  ifu.io.in.bits.pc := Mux(start_tick, 0x20000000L.U, wbu.io.out.bits.pc)
+  ifu.io.in.bits.pc := Mux(start_tick, 0x30000000L.U, wbu.io.out.bits.pc)
   wbu.io.out.ready := ifu.io.in.ready
 
   ifu.io.out <> idu.io.in
@@ -53,11 +49,6 @@ class TopLevel() extends Module {
   io.slave.rlast := false.B
   io.slave.wready := false.B
   io.slave.rid := 0.U
-
-  io.test_imem_en := ifu.io.test_imem_en
-  io.test_regs := exu.io.test_regs
-  io.test_csr := exu.io.test_csr
-  io.test_pc := ifu.io.test_pc
 
   difftest.io.enable := ifu.io.test_imem_en
   difftest.io.regs := exu.io.test_regs

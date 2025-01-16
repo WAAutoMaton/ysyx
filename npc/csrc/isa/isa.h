@@ -20,6 +20,8 @@ extern "C" struct riscv32_CPU_state{
   word_t mstatus;
   word_t mcause;
   word_t mtvec;
+  word_t mvendorid;
+  word_t marchid;
 };
 
 using CPU_state = riscv32_CPU_state;

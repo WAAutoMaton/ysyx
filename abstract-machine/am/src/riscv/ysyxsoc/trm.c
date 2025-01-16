@@ -2,11 +2,12 @@
 #include <klib-macros.h>
 #include "include/ysyxsoc.h"
 #include "../riscv.h"
+#include <stdio.h>
 
 extern char _heap_start;
 int main(const char *args);
 
-extern char _pmem_start;
+//extern char _pmem_start;
 #define HEAP_SIZE 0x1000
 #define HEAP_END  ((uintptr_t)&_heap_start + HEAP_SIZE)
 
@@ -69,9 +70,19 @@ void bootloader() {
   }
 }
 
+void print_mvendor_march() {
+  uint32_t mvendorid;
+  uint32_t marchid;
+  __asm__ volatile("csrr %0, mvendorid" : "=r"(mvendorid));
+  __asm__ volatile("csrr %0, marchid" : "=r"(marchid));
+  printf("mvendorid: %d\n", mvendorid);
+  printf("marchid: %d\n", marchid);
+}
+
 void _trm_init() {
   init_uart();
   bootloader();
+  print_mvendor_march();
   int ret = main(mainargs);
   halt(ret);
 }

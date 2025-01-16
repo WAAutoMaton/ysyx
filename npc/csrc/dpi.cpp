@@ -81,7 +81,7 @@ extern "C" {
 		 int regs_20,  int regs_21,  int regs_22,  int regs_23,
 		 int regs_24,  int regs_25,  int regs_26,  int regs_27,
 		 int regs_28,  int regs_29,  int regs_30,  int regs_31,
-		 int csr_0,  int csr_1,  int csr_2,  int csr_3
+		 int csr_0,  int csr_1,  int csr_2,  int csr_3, int csr_4, int csr_5
 	)
 	{
 		if (pc==0) return;
@@ -123,6 +123,8 @@ extern "C" {
 		cpu.mepc = csr_1;
 		cpu.mcause = csr_2;
 		cpu.mtvec = csr_3;
+		cpu.mvendorid = csr_4;
+		cpu.marchid = csr_5;
 
 #ifdef CONFIG_TRACE
 		trace_exec(pc, 0);

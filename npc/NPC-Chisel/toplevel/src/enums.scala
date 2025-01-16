@@ -14,7 +14,7 @@ object Constant  {
   val StValueLen: Width = 3.W
   val CsrValLen: Width = 2.W
   val RegisterNum = 32
-  val CSRNum = 4
+  val CSRNum = 6
   val RegAddrLen: Width = 5.W
 }
 object ImmType extends Enumeration {
